@@ -58,6 +58,8 @@
                 <button onclick="showSection('master-user')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-users mr-2"></i> User</button>
                 <button onclick="showSection('opl-master')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-book mr-2"></i> Master OPL</button>
                 
+                <button onclick="showSection('master-temuan')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-list-check mr-2"></i> Master Temuan</button>
+                
                 <div class="text-gray-500 text-xs uppercase mt-4 mb-2">Operasional</div>
                 <button onclick="showSection('opl-saya')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-folder-open mr-2"></i> OPL Saya</button>
                 <button onclick="showSection('reporting')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-paper-plane mr-2"></i> Pelaporan</button>
@@ -89,6 +91,14 @@
                 </div>
 
                 <!-- MASTER DEPARTEMEN -->
+                <div id="sec-master-temuan" class="section hidden fade-in">
+                    <h3 class="font-bold text-lg mb-4">Master Kategori Temuan</h3>
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex gap-2 mb-4"><input id="fc-desc" class="flex-1 border p-2 rounded" placeholder="Uraian temuan baku"><select id="fc-final" class="border p-2 rounded"><option>OK</option><option>Minor</option><option>Mayor</option></select><button onclick="addFindingCat()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Tambah</button></div>
+                        <table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-3">Uraian Temuan</th><th class="p-3">Kategori Final</th><th class="p-3">Status</th><th class="p-3">Aksi</th></tr></thead><tbody id="fc-body"></tbody></table>
+                    </div>
+                </div>
+
                 <div id="sec-opl-saya" class="section hidden fade-in">
                     <div class="flex justify-between mb-4"><h3 class="font-bold text-lg">Daftar OPL Bagian Saya</h3><span id="opl-saya-info" class="text-sm text-gray-500"></span></div>
                     <div id="opl-saya-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
@@ -171,7 +181,7 @@
                         <h3 class="font-bold text-lg mb-4">Input Hasil Audit</h3>
                         <div class="grid grid-cols-2 gap-4 mb-4">
                             <div><label class="block text-sm font-bold mb-1">Pilih OPL</label><select id="audit-opl-select" class="w-full border p-2 rounded"></select></div>
-                            <div><label class="block text-sm font-bold mb-1">Bagian Diudit</label><select id="audit-dept-select" class="w-full border p-2 rounded dept-select"></select></div>
+                            <div><label class="block text-sm font-bold mb-1">Bagian Diaudit</label><select id="audit-dept-select" class="w-full border p-2 rounded dept-select"></select></div>
                         </div>
                         <div class="mb-4">
                             <label class="block text-sm font-bold mb-1">Kategori Temuan Baku</label>
@@ -183,8 +193,14 @@
                             </select>
                         </div>
                         <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div><label class="block text-sm font-bold mb-1">Kategori Final</label><select id="audit-finding-select" class="w-full border p-2 rounded"><option value="OK">OK</option><option value="Minor">Minor</option><option value="Mayor">Mayor</option></select></div>
+                            <div><label class="block text-sm font-bold mb-1">Kategori Final <span class="font-normal text-gray-500">(otomatis dari master temuan)</span></label><select id="audit-finding-select" disabled class="w-full border p-2 rounded bg-gray-100"><option value="OK">OK</option><option value="Minor">Minor</option><option value="Mayor">Mayor</option></select></div>
                             <div><label class="block text-sm font-bold mb-1">Verifikator</label><input type="text" id="audit-verifikator" class="w-full border p-2 rounded"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div><label class="block text-sm font-bold mb-1">Jabatan Verifikator</label><input type="text" id="audit-verifier-title" placeholder="MR, HR, Consultant" class="w-full border p-2 rounded"></div>
+                            <div><label class="block text-sm font-bold mb-1">Tanggal Sosialisasi OPL</label><input type="date" id="audit-sosialisasi" class="w-full border p-2 rounded"></div>
+                            <div><label class="block text-sm font-bold mb-1">Nama PIC / Penanggung Jawab</label><input type="text" id="audit-pic-name" class="w-full border p-2 rounded"></div>
+                            <div><label class="block text-sm font-bold mb-1">Jabatan PIC</label><input type="text" id="audit-pic-title" placeholder="Spv Produksi" class="w-full border p-2 rounded"></div>
                         </div>
                         <div class="mb-4"><label class="block text-sm font-bold mb-1">Keterangan Temuan</label><textarea id="audit-keterangan" rows="3" class="w-full border p-2 rounded"></textarea></div>
                         <button class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700" onclick="submitAudit()"><i class="fas fa-gavel mr-2"></i> Submit Audit</button>
@@ -244,6 +260,17 @@
         </div>
     </div>
 
+    <!-- Modal CAPA -->
+    <div id="modal-capa" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg w-[36rem] max-w-[95vw] max-h-[92vh] overflow-y-auto shadow-2xl">
+            <h3 id="capa-title" class="text-xl font-bold mb-1">Isi CAPA</h3><p id="capa-sub" class="text-sm text-gray-600 mb-3"></p>
+            <label class="block text-sm font-bold mb-1">Tindakan Perbaikan</label><textarea id="capa-tp" rows="4" class="w-full border p-2 rounded mb-3"></textarea>
+            <label class="block text-sm font-bold mb-1">Tindakan Pencegahan</label><textarea id="capa-tc" rows="4" class="w-full border p-2 rounded mb-3"></textarea>
+            <label class="block text-sm font-bold mb-1">Target Selesai</label><input type="date" id="capa-target" class="w-full border p-2 rounded mb-4">
+            <div class="flex justify-end space-x-2"><button onclick="hideModal('modal-capa')" class="px-4 py-2 bg-gray-300 rounded">Batal</button><button onclick="saveCapa()" class="px-4 py-2 bg-blue-600 text-white rounded">Kirim CAPA</button></div>
+        </div>
+    </div>
+
     <!-- Modal OPL (Dengan Tipe Pelaporan) -->
     <div id="modal-opl" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white p-6 rounded-lg w-1/2 shadow-2xl">
@@ -277,6 +304,12 @@
         let opls = [];
 
         let scores = {};
+        let findingCats = [];
+        function computeScores() {
+            scores = {}; departments.forEach(d => scores[d] = { base: 100, penalty: 0, final: 100 });
+            const ym = new Date().toISOString().slice(0, 7);
+            audits.filter(a => String(a.date).slice(0, 7) === ym).forEach(a => { const sc = scores[a.dept]; if (!sc || a.finding === 'OK') return; sc.penalty = a.isRepeated ? 100 : sc.penalty + 50; sc.final = Math.max(0, 100 - sc.penalty); });
+        }
         let audits = [];
         let capaTickets = []; 
         let currentUser = null;
@@ -304,13 +337,22 @@
             opls = o.data.map(x => ({ id: x.id, case: x.case_name, name: x.name, dept: x.dept, reportType: x.report_type,
                 creationDate: x.creation_date, expiryDate: x.expiry_date, status: x.status, image: x.image_url }));
             users = u.data || [];
-            initScores();
+            const [au, tk, fc] = await Promise.all([
+                sb.from('audits').select('*').order('id'),
+                sb.from('capa_tickets').select('*, audits(doc_no, verifikator, verifier_title, pic_name, pic_title, socialization_date)').order('id', { ascending: false }),
+                sb.from('finding_categories').select('*').order('id')
+            ]);
+            if (au.error || tk.error || fc.error) throw new Error((au.error || tk.error || fc.error).message);
+            findingCats = fc.data;
+            audits = au.data.map(a => ({ id: a.id, oplId: a.opl_id, dept: a.dept, finding: a.finding, keterangan: a.keterangan, isRepeated: a.is_repeated, docNo: a.doc_no, date: a.audit_date }));
+            capaTickets = tk.data.map(t => ({ id: t.id, oplId: t.opl_id, dept: t.dept, finding: t.finding, keterangan: t.keterangan, status: t.status, tp: t.tindakan_perbaikan, tc: t.tindakan_pencegahan, target: t.target_date, ba: t.audits || {} }));
+            computeScores(); updateTicketBadge();
         }
 
         async function enterApp(session) {
             const { data: prof, error } = await sb.from('profiles').select('username, role, dept, permissions').eq('id', session.user.id).single();
             if (error || !prof) { await sb.auth.signOut(); return showLoginError('Akun belum terdaftar di sistem. Hubungi Admin.'); }
-            currentUser = prof;
+            currentUser = prof; currentUser.id = session.user.id;
             try { await loadData(); } catch (e) { await sb.auth.signOut(); return showLoginError('Gagal memuat data: ' + e.message); }
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('app-view').classList.remove('hidden');
@@ -347,7 +389,7 @@
         function showSection(sectionName) {
             document.querySelectorAll('.section').forEach(el => el.classList.add('hidden'));
             document.getElementById(`sec-${sectionName}`).classList.remove('hidden');
-            const titles = { 'dashboard': 'Dashboard', 'master-dept': 'Master Departemen', 'master-user': 'Master User', 'opl-master': 'Master OPL', 'reporting': 'Pelaporan OPL', 'audit': 'Audit & Penilaian', 'tickets': 'Tiket CAPA', 'recap': 'Rekapitulasi', 'opl-saya': 'OPL Saya' };
+            const titles = { 'dashboard': 'Dashboard', 'master-dept': 'Master Departemen', 'master-user': 'Master User', 'opl-master': 'Master OPL', 'reporting': 'Pelaporan OPL', 'audit': 'Audit & Penilaian', 'tickets': 'Tiket CAPA', 'recap': 'Rekapitulasi', 'opl-saya': 'OPL Saya', 'master-temuan': 'Master Temuan' };
             document.getElementById('page-title').innerText = titles[sectionName];
             if(sectionName === 'dashboard') renderDashboard();
             if(sectionName === 'master-dept') renderDeptTable();
@@ -358,6 +400,7 @@
             if(sectionName === 'tickets') renderTickets();
             if(sectionName === 'recap') renderRecap();
             if(sectionName === 'opl-saya') renderOplSaya();
+            if(sectionName === 'master-temuan') renderFindingCats();
         }
 
         function showModal(id) { document.getElementById(id).classList.remove('hidden'); }
@@ -385,35 +428,40 @@
             let html = ''; departments.forEach((d, i) => { html += `<tr class="border-b"><td class="p-3">${i+1}</td><td class="p-3 font-bold">${d}</td><td class="p-3"><button onclick="deleteDept('${d}')" class="text-red-500 hover:underline"><i class="fas fa-trash"></i></button></td></tr>`; });
             document.getElementById('dept-table-body').innerHTML = html;
         }
-        function addDepartment() {
-            let name = document.getElementById('inp-dept-name').value.toUpperCase(); if(!name) return alert('Nama wajib diisi'); if(departments.includes(name)) return alert('Sudah ada');
-            departments.push(name); scores[name] = { base: 100, penalty: 0, final: 100 }; document.getElementById('inp-dept-name').value = ''; refreshDeptDropdowns(); hideModal('modal-dept'); renderDeptTable();
+        async function addDepartment() {
+            const name = document.getElementById('inp-dept-name').value.trim().toUpperCase(); if (!name) return alert('Nama wajib diisi'); if (departments.includes(name)) return alert('Sudah ada');
+            const { error } = await sb.from('departments').insert({ name }); if (error) return alert('Gagal: ' + error.message);
+            document.getElementById('inp-dept-name').value = ''; await loadData(); refreshDeptDropdowns(); hideModal('modal-dept'); renderDeptTable();
         }
-        function deleteDept(name) { if(confirm(`Hapus ${name}?`)) { departments = departments.filter(d => d !== name); delete scores[name]; refreshDeptDropdowns(); renderDeptTable(); } }
+        async function deleteDept(name) { if (!confirm(`Hapus ${name}?`)) return; const { error } = await sb.from('departments').delete().eq('name', name); if (error) return alert('Tidak bisa dihapus (masih dipakai OPL/audit?): ' + error.message); await loadData(); refreshDeptDropdowns(); renderDeptTable(); }
 
         // --- MASTER USER ---
 
         // --- MASTER OPL ---
-        async function createNewOPL() {
-            const caseName = document.getElementById('trigger-case').value; const oplName = document.getElementById('trigger-opl-name').value; const dept = document.getElementById('trigger-dept').value;
-            const reportType = document.getElementById('trigger-report-type').value; // Ambil tipe laporan
-            if(!caseName || !oplName) return alert('Harap isi Case dan Nama OPL!');
-            
-            const imageBase64 = await fileToBase64('trigger-img');
-            if(!imageBase64) return alert('Upload Gambar OPL wajib dilakukan!');
-
-            const today = new Date(); const expiry = new Date(); expiry.setMonth(expiry.getMonth() + 6);
-            opls.push({
-                id: 'OPL' + (opls.length + 1).toString().padStart(3, '0'), case: caseName, name: oplName, dept: dept, reportType: reportType,
-                creationDate: today.toISOString().split('T')[0], expiryDate: expiry.toISOString().split('T')[0], status: 'OPEN', image: imageBase64
+        function compressImage(inputId) {
+            return new Promise(resolve => {
+                const f = document.getElementById(inputId).files[0]; if (!f) return resolve(null);
+                const img = new Image(), url = URL.createObjectURL(f);
+                img.onload = () => { const k = Math.min(1, 1280 / Math.max(img.width, img.height)); const c = document.createElement('canvas'); c.width = img.width * k; c.height = img.height * k; c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); resolve(c.toDataURL('image/jpeg', 0.75)); };
+                img.onerror = () => resolve(null); img.src = url;
             });
-            hideModal('modal-opl'); renderOPLTable(); alert('OPL berhasil dibuat!');
         }
-        function reviseOPL(oplId) {
-            if(confirm('Revisi OPL? Umur akan update 6 bulan dari hari ini.')) {
-                const opl = opls.find(o => o.id === oplId); const today = new Date(); const newExpiry = new Date(); newExpiry.setMonth(newExpiry.getMonth() + 6);
-                opl.creationDate = today.toISOString().split('T')[0]; opl.expiryDate = newExpiry.toISOString().split('T')[0]; opl.status = 'REVISED'; renderOPLTable();
-            }
+        async function createNewOPL() {
+            const caseName = document.getElementById('trigger-case').value.trim(), oplName = document.getElementById('trigger-opl-name').value.trim(), dept = document.getElementById('trigger-dept').value, reportType = document.getElementById('trigger-report-type').value;
+            if (!caseName || !oplName) return alert('Harap isi Case dan Nama OPL!');
+            if (dept === 'ALL') return alert('Pilih satu departemen untuk OPL ini.');
+            const image = await compressImage('trigger-img'); if (!image) return alert('Upload Gambar OPL wajib dilakukan!');
+            const nums = opls.map(o => parseInt(o.id.replace(/\D/g, '')) || 0), id = 'OPL' + String(Math.max(0, ...nums) + 1).padStart(3, '0');
+            const exp = new Date(); exp.setMonth(exp.getMonth() + 6);
+            const { error } = await sb.from('opls').insert({ id, case_name: caseName, name: oplName, dept, report_type: reportType, creation_date: new Date().toISOString().slice(0, 10), expiry_date: exp.toISOString().slice(0, 10), status: 'OPEN', image_url: image });
+            if (error) return alert('Gagal menyimpan OPL: ' + error.message);
+            hideModal('modal-opl'); await loadData(); renderOPLTable(); alert('OPL ' + id + ' berhasil dibuat!');
+        }
+        async function reviseOPL(oplId) {
+            if (!confirm('Revisi OPL? Umur akan update 6 bulan dari hari ini.')) return;
+            const exp = new Date(); exp.setMonth(exp.getMonth() + 6);
+            const { error } = await sb.from('opls').update({ creation_date: new Date().toISOString().slice(0, 10), expiry_date: exp.toISOString().slice(0, 10), status: 'REVISED' }).eq('id', oplId);
+            if (error) return alert('Gagal: ' + error.message); await loadData(); renderOPLTable();
         }
         function renderOPLTable() {
             let html = '';
@@ -503,40 +551,85 @@
 
         // --- AUDIT ---
         function handleKategoriBakuChange() {
-            const val = document.getElementById('audit-kategori-baku').value;
-            if(val) { const [category, description] = val.split('|'); document.getElementById('audit-finding-select').value = category; document.getElementById('audit-keterangan').value = description; }
+            const c = findingCats.find(x => String(x.id) === document.getElementById('audit-kategori-baku').value);
+            document.getElementById('audit-finding-select').value = c ? c.final_category : 'OK';
+            if (c) document.getElementById('audit-keterangan').value = c.description;
         }
         function renderAuditSection() {
-            let oHtml = '<option value="">-- Pilih OPL --</option>'; opls.forEach(o => { oHtml += `<option value="${o.id}">${o.id} - ${o.name} (${o.dept})</option>`; }); document.getElementById('audit-opl-select').innerHTML = oHtml;
-            let aHtml = ''; audits.slice().reverse().forEach(a => {
+            document.getElementById('audit-opl-select').innerHTML = '<option value="">-- Pilih OPL --</option>' + opls.map(o => `<option value="${esc(o.id)}">${esc(o.id)} - ${esc(o.name)} (${esc(o.dept)})</option>`).join('');
+            document.getElementById('audit-opl-select').onchange = e => { const o = opls.find(x => x.id === e.target.value); if (o) document.getElementById('audit-dept-select').value = o.dept; };
+            document.getElementById('audit-kategori-baku').innerHTML = '<option value="">-- Pilih --</option>' + findingCats.filter(c => c.is_active).map(c => `<option value="${c.id}">${esc(c.final_category)} - ${esc(c.description)}</option>`).join('');
+            document.getElementById('audit-history').innerHTML = audits.slice().reverse().map(a => {
                 const color = a.finding === 'OK' ? 'text-green-600' : (a.finding === 'Minor' ? 'text-yellow-600' : 'text-red-600');
-                aHtml += `<div class="p-3 bg-gray-50 rounded border-l-4 ${a.finding === 'OK' ? 'border-green-500' : 'border-red-500'}"><span class="font-bold">${a.oplId}</span> - <span class="font-bold">${a.dept}</span> | Kategori: <span class="${color} font-bold">${a.finding}</span> ${a.isRepeated ? '<span class="text-red-800 text-xs bg-red-200 px-2 rounded">BERULANG</span>' : ''}<p class="text-sm italic mt-1">"${a.keterangan}"</p></div>`;
-            }); document.getElementById('audit-history').innerHTML = aHtml || '<p class="text-sm text-gray-500">Belum ada audit.</p>';
+                return `<div class="p-3 bg-gray-50 rounded border-l-4 ${a.finding === 'OK' ? 'border-green-500' : 'border-red-500'}"><span class="font-mono text-xs text-gray-500">${esc(a.docNo)}</span><br><span class="font-bold">${esc(a.oplId)}</span> - <span class="font-bold">${esc(a.dept)}</span> | Kategori: <span class="${color} font-bold">${esc(a.finding)}</span> ${a.isRepeated ? '<span class="text-red-800 text-xs bg-red-200 px-2 rounded">BERULANG</span>' : ''}<p class="text-sm italic mt-1">"${esc(a.keterangan)}"</p></div>`;
+            }).join('') || '<p class="text-sm text-gray-500">Belum ada audit.</p>';
         }
-        function submitAudit() {
-            const oplId = document.getElementById('audit-opl-select').value; const dept = document.getElementById('audit-dept-select').value; const finding = document.getElementById('audit-finding-select').value; const keterangan = document.getElementById('audit-keterangan').value;
-            if(!oplId || !keterangan) return alert('OPL dan Keterangan wajib diisi!');
-            const currentMonth = new Date().getMonth(); const isRepeated = audits.find(a => a.oplId === oplId && a.dept === dept && a.month === currentMonth && (a.finding === 'Minor' || a.finding === 'Mayor'));
-            audits.push({ oplId, dept, finding, keterangan, month: currentMonth, isRepeated: !!isRepeated, date: new Date().toLocaleDateString() });
-            if(finding !== 'OK') {
-                if(isRepeated) scores[dept].penalty = 100; else scores[dept].penalty += 50; scores[dept].final = Math.max(0, scores[dept].base - scores[dept].penalty);
-                const oplData = opls.find(o => o.id === oplId); capaTickets.push({ id: 'CAPA-' + Date.now(), oplId, oplName: oplData ? oplData.name : '-', dept, finding, keterangan, status: 'OPEN', createdAt: new Date().toLocaleString() }); updateTicketBadge();
-            } renderAuditSection(); alert('Audit disubmit! Tiket CAPA dikirim ke ' + dept);
+        async function submitAudit() {
+            const g = id => document.getElementById(id).value.trim();
+            const oplId = g('audit-opl-select'), dept = g('audit-dept-select'), catId = g('audit-kategori-baku'), keterangan = g('audit-keterangan');
+            if (!oplId || !catId || !keterangan) return alert('OPL, Kategori Temuan, dan Keterangan wajib diisi!');
+            if (!dept || dept === 'ALL') return alert('Pilih bagian yang diaudit.');
+            const cat = findingCats.find(c => String(c.id) === catId), ym = new Date().toISOString().slice(0, 7);
+            const isRepeated = audits.some(a => a.oplId === oplId && a.dept === dept && String(a.date).slice(0, 7) === ym && a.finding !== 'OK');
+            const { error } = await sb.from('audits').insert({ opl_id: oplId, dept, finding: cat.final_category, category_id: cat.id, keterangan, verifikator: g('audit-verifikator'), verifier_title: g('audit-verifier-title'), socialization_date: g('audit-sosialisasi') || null, pic_name: g('audit-pic-name'), pic_title: g('audit-pic-title'), is_repeated: isRepeated, audited_by: currentUser.id });
+            if (error) return alert('Gagal menyimpan audit: ' + error.message);
+            ['audit-keterangan', 'audit-verifikator', 'audit-verifier-title', 'audit-sosialisasi', 'audit-pic-name', 'audit-pic-title'].forEach(i => document.getElementById(i).value = '');
+            await loadData(); renderAuditSection();
+            alert(cat.final_category === 'OK' ? 'Audit tersimpan.' : 'Audit tersimpan. Tiket CAPA dikirim ke bagian ' + dept + '.');
         }
         function updateTicketBadge() { const openTickets = capaTickets.filter(t => t.status === 'OPEN').length; const badge = document.getElementById('ticket-badge'); badge.innerText = openTickets; if(openTickets > 0) badge.classList.remove('hidden'); else badge.classList.add('hidden'); }
 
         // --- TIKET CAPA ---
+        const fmtDate = d => d ? new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-';
+        const STATUS_LABEL = { OPEN: 'Menunggu CAPA', IN_PROGRESS: 'CAPA diisi, menunggu verifikasi', CLOSED: 'Selesai' };
         function renderTickets() {
-            const filteredTickets = currentUser.role === 'User' ? capaTickets.filter(t => t.dept === currentUser.dept) : capaTickets; let html = '';
-            if(filteredTickets.length === 0) { html = '<p class="text-gray-500">Tidak ada tiket.</p>'; } else {
-                filteredTickets.forEach(t => {
-                    const statusBadge = t.status === 'OPEN' ? 'bg-red-100 text-red-800' : (t.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800');
-                    html += `<div class="border rounded-lg p-4 shadow-sm bg-white"><div class="flex justify-between items-start"><div><h4 class="font-bold text-lg text-indigo-700">${t.id}</h4><p class="text-sm mt-1"><strong>OPL:</strong> ${t.oplName} | <strong>Bagian:</strong> ${t.dept}</p></div><span class="px-3 py-1 rounded-full text-xs font-bold ${statusBadge}">${t.status}</span></div><div class="mt-3 bg-gray-50 p-3 rounded border"><p class="text-sm font-bold">Temuan (${t.finding}):</p><p class="text-sm text-gray-700">${t.keterangan}</p></div><div class="mt-3 flex justify-end space-x-2">${t.status === 'OPEN' ? `<button onclick="startCAPA('${t.id}')" class="bg-yellow-500 text-white px-3 py-1 rounded text-sm">Mulai CAPA</button>` : ''}${t.status === 'IN_PROGRESS' ? `<button onclick="closeCAPA('${t.id}')" class="bg-green-600 text-white px-3 py-1 rounded text-sm">Selesai CAPA</button>` : ''}</div></div>`;
-                });
-            } document.getElementById('capa-tickets-list').innerHTML = html;
+            const canInput = perm('tickets') === 'input', reviewer = ['Admin', 'Auditor'].includes(currentUser.role), filler = ['Admin', 'User'].includes(currentUser.role);
+            document.getElementById('capa-tickets-list').innerHTML = capaTickets.map(t => {
+                const o = opls.find(x => x.id === t.oplId) || {};
+                const badge = t.status === 'OPEN' ? 'bg-red-100 text-red-800' : (t.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800');
+                const btn = (fn, txt, cls) => `<button onclick="${fn}(${t.id})" class="${cls} px-3 py-1 rounded text-sm">${txt}</button>`;
+                return `<div class="border rounded-lg p-4 shadow-sm bg-white"><div class="flex justify-between items-start"><div><h4 class="font-bold text-lg text-indigo-700">${esc(t.ba.doc_no || 'CAPA-' + t.id)}</h4><p class="text-sm mt-1"><strong>OPL:</strong> ${esc(o.name || t.oplId)} | <strong>Bagian:</strong> ${esc(t.dept)}</p></div><span class="px-3 py-1 rounded-full text-xs font-bold ${badge}">${STATUS_LABEL[t.status]}</span></div>
+                    <div class="mt-3 bg-gray-50 p-3 rounded border"><p class="text-sm font-bold">Temuan (${esc(t.finding)}):</p><p class="text-sm text-gray-700">${esc(t.keterangan)}</p></div>
+                    ${t.tp || t.tc ? `<div class="mt-3 text-sm"><p><b>Tindakan Perbaikan:</b> ${esc(t.tp)}</p><p><b>Tindakan Pencegahan:</b> ${esc(t.tc)}</p><p><b>Target:</b> ${fmtDate(t.target)}</p></div>` : ''}
+                    <div class="mt-3 flex justify-end space-x-2">${btn('printBA', '<i class="fas fa-print mr-1"></i>Cetak Berita Acara', 'keep-read bg-gray-200 hover:bg-gray-300')}
+                    ${canInput && filler && t.status !== 'CLOSED' ? btn('openCapa', t.status === 'OPEN' ? 'Isi CAPA' : 'Ubah CAPA', 'bg-blue-600 text-white hover:bg-blue-700') : ''}
+                    ${canInput && reviewer && t.status === 'IN_PROGRESS' ? btn('closeTicket', 'Verifikasi & Tutup', 'bg-green-600 text-white hover:bg-green-700') : ''}</div></div>`;
+            }).join('') || '<p class="text-gray-500">Tidak ada tiket.</p>';
         }
-        function startCAPA(id) { capaTickets.find(t => t.id === id).status = 'IN_PROGRESS'; renderTickets(); }
-        function closeCAPA(id) { capaTickets.find(t => t.id === id).status = 'CLOSED'; updateTicketBadge(); renderTickets(); }
+        let capaEditId = null;
+        function openCapa(id) {
+            const t = capaTickets.find(x => x.id === id); capaEditId = id;
+            document.getElementById('capa-title').innerText = 'CAPA ' + (t.ba.doc_no || t.id); document.getElementById('capa-sub').innerText = `Temuan ${t.finding}: ${t.keterangan}`;
+            document.getElementById('capa-tp').value = t.tp || ''; document.getElementById('capa-tc').value = t.tc || ''; document.getElementById('capa-target').value = t.target || '';
+            showModal('modal-capa');
+        }
+        async function saveCapa() {
+            const tp = document.getElementById('capa-tp').value.trim(), tc = document.getElementById('capa-tc').value.trim(), target = document.getElementById('capa-target').value;
+            if (!tp || !tc || !target) return alert('Tindakan Perbaikan, Tindakan Pencegahan, dan Target Selesai wajib diisi.');
+            const { error } = await sb.from('capa_tickets').update({ tindakan_perbaikan: tp, tindakan_pencegahan: tc, target_date: target, status: 'IN_PROGRESS', submitted_at: new Date().toISOString() }).eq('id', capaEditId);
+            if (error) return alert('Gagal: ' + error.message);
+            hideModal('modal-capa'); await loadData(); renderTickets();
+        }
+        async function closeTicket(id) {
+            if (!confirm('CAPA sudah diverifikasi dan tiket ditutup?')) return;
+            const { error } = await sb.from('capa_tickets').update({ status: 'CLOSED', closed_at: new Date().toISOString() }).eq('id', id);
+            if (error) return alert('Gagal: ' + error.message); await loadData(); renderTickets();
+        }
+        function printBA(id) {
+            const t = capaTickets.find(x => x.id === id), o = opls.find(x => x.id === t.oplId) || {}, b = t.ba || {}, row = (k, v) => `<tr><td style="width:38%">${k}</td><td>: ${esc(v || '-')}</td></tr>`;
+            const w = window.open('', '_blank');
+            w.document.write(`<html><head><title>${esc(b.doc_no)}</title><style>body{font-family:Arial;font-size:13px;margin:32px}h2,h3{text-align:center;margin:2px}td{padding:3px;vertical-align:top}.box{border:1px solid #000;padding:8px;min-height:60px;white-space:pre-wrap}.sig td{text-align:center;width:33%;padding-top:70px}</style></head><body>
+            <h2>BERITA ACARA VERIFIKASI PELAKSANAAN SOSIALISASI</h2><h3>ONE POINT LESSON (OPL)</h3><p style="text-align:right">NO: ${esc(b.doc_no)}</p>
+            <p>Pada hari ini, ${fmtDate(new Date())}, bertempat di PT Cahaya Berlian Lestari, telah dilaksanakan kegiatan verifikasi terhadap pelaksanaan sosialisasi One Point Lesson (OPL), dengan rincian sebagai berikut:</p>
+            <b>I. IDENTITAS</b><table>${row('Nama Departemen', t.dept)}${row('Nama PIC / Penanggung Jawab', b.pic_name)}${row('Jabatan', b.pic_title)}${row('Nama Verifikator', b.verifikator)}${row('Jabatan', b.verifier_title)}${row('Judul OPL', o.name)}${row('Nomor Dokumen OPL', t.oplId)}${row('Tanggal Efektif OPL', fmtDate(o.creationDate))}${row('Tanggal Sosialisasi', fmtDate(b.socialization_date))}</table>
+            <p><b>II. HASIL VERIFIKASI</b></p><div class="box">${esc(t.keterangan)}</div><p>Temuan ini dikategorikan sebagai: <b>${esc(String(t.finding).toUpperCase())}</b></p>
+            <p><b>III. TINDAKAN PENCEGAHAN DAN PERBAIKAN</b><br>Atas temuan tersebut, akan dilakukan perbaikan dan pencegahan dari bagian terkait sebagai berikut:</p>
+            <p>Tindakan Perbaikan:</p><div class="box">${esc(t.tp)}</div><p>Tindakan Pencegahan:</p><div class="box">${esc(t.tc)}</div><p>Target selesai: ${fmtDate(t.target)}</p>
+            <p><b>IV. Penutup</b><br>Demikian Berita Acara Verifikasi ini dibuat dengan sebenar-benarnya untuk digunakan sebagaimana mestinya dan sebagai dasar tindak lanjut perbaikan.</p>
+            <p>Dibuat di : PT CAHAYA BERLIAN LESTARI<br>Pada tanggal : ${fmtDate(new Date())}</p>
+            <table class="sig" style="width:100%"><tr><td>Verifikator</td><td>Mengetahui</td><td>Auditee</td></tr><tr><td>(____________________)<br>Nama / Jabatan</td><td>(____________________)<br>Nama / Jabatan</td><td>(____________________)<br>Nama / Jabatan</td></tr></table></body></html>`);
+            w.document.close(); w.focus(); setTimeout(() => w.print(), 300);
+        }
 
         // --- DASHBOARD & RECAP ---
         function renderDashboard() {
@@ -548,7 +641,7 @@
         }
 
         // --- HAK AKSES MENU ---
-        const MENUS = [['dashboard','Dashboard'],['master-dept','Departemen'],['master-user','User'],['opl-master','Master OPL'],['opl-saya','OPL Saya'],['reporting','Pelaporan'],['audit','Audit'],['tickets','Tiket CAPA'],['recap','Rekapitulasi']];
+        const MENUS = [['dashboard','Dashboard'],['master-dept','Departemen'],['master-user','User'],['opl-master','Master OPL'],['master-temuan','Master Temuan'],['opl-saya','OPL Saya'],['reporting','Pelaporan'],['audit','Audit'],['tickets','Tiket CAPA'],['recap','Rekapitulasi']];
         const LEVEL_LABEL = { none: 'Tidak ada', read: 'Lihat saja', input: 'Input' };
         function esc(v) { return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
         function perm(k) { if (!currentUser) return 'none'; if (currentUser.role === 'Admin') return 'input'; return (currentUser.permissions || {})[k] || 'none'; }
@@ -592,7 +685,7 @@
         // --- MASTER USER ---
         let editingUserId = null;
         function defaultPerms(role) {
-            if (role === 'Auditor') return { dashboard: 'read', 'opl-master': 'read', 'opl-saya': 'read', audit: 'input', tickets: 'read', recap: 'read' };
+            if (role === 'Auditor') return { dashboard: 'read', 'opl-master': 'read', 'opl-saya': 'read', audit: 'input', tickets: 'input', recap: 'read' };
             if (role === 'Admin') return Object.fromEntries(MENUS.map(([k]) => [k, 'input']));
             return { dashboard: 'read', 'opl-saya': 'read', reporting: 'input', tickets: 'input', recap: 'read' };
         }
@@ -635,6 +728,20 @@
             }
             if (error) return alert('Gagal menyimpan: ' + error.message);
             hideModal('modal-user'); await loadData(); renderUserTable(); alert('User berhasil disimpan.');
+        }
+
+        // --- MASTER TEMUAN ---
+        function renderFindingCats() {
+            document.getElementById('fc-body').innerHTML = findingCats.map(c => `<tr class="border-b"><td class="p-3 text-sm">${esc(c.description)}</td><td class="p-3 font-bold">${esc(c.final_category)}</td><td class="p-3 text-sm">${c.is_active ? 'Aktif' : 'Nonaktif'}</td><td class="p-3"><button onclick="toggleFindingCat(${c.id})" class="text-indigo-600 hover:underline text-sm">${c.is_active ? 'Nonaktifkan' : 'Aktifkan'}</button></td></tr>`).join('');
+        }
+        async function addFindingCat() {
+            const description = document.getElementById('fc-desc').value.trim(); if (!description) return alert('Uraian temuan wajib diisi.');
+            const { error } = await sb.from('finding_categories').insert({ description, final_category: document.getElementById('fc-final').value });
+            if (error) return alert('Gagal: ' + error.message); document.getElementById('fc-desc').value = ''; await loadData(); renderFindingCats();
+        }
+        async function toggleFindingCat(id) {
+            const c = findingCats.find(x => x.id === id); const { error } = await sb.from('finding_categories').update({ is_active: !c.is_active }).eq('id', id);
+            if (error) return alert('Gagal: ' + error.message); await loadData(); renderFindingCats();
         }
     </script>
 </body>
