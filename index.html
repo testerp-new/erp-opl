@@ -59,6 +59,7 @@
                 <button onclick="showSection('opl-master')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-book mr-2"></i> Master OPL</button>
                 
                 <div class="text-gray-500 text-xs uppercase mt-4 mb-2">Operasional</div>
+                <button onclick="showSection('opl-saya')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-folder-open mr-2"></i> OPL Saya</button>
                 <button onclick="showSection('reporting')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-paper-plane mr-2"></i> Pelaporan</button>
                 <button onclick="showSection('audit')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-search mr-2"></i> Audit</button>
                 <button onclick="showSection('tickets')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700">
@@ -88,6 +89,11 @@
                 </div>
 
                 <!-- MASTER DEPARTEMEN -->
+                <div id="sec-opl-saya" class="section hidden fade-in">
+                    <div class="flex justify-between mb-4"><h3 class="font-bold text-lg">Daftar OPL Bagian Saya</h3><span id="opl-saya-info" class="text-sm text-gray-500"></span></div>
+                    <div id="opl-saya-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </div>
+
                 <div id="sec-master-dept" class="section hidden fade-in">
                     <div class="flex justify-between mb-4">
                         <h3 class="font-bold text-lg">Master Departemen</h3>
@@ -101,11 +107,11 @@
                 <!-- MASTER USER -->
                 <div id="sec-master-user" class="section hidden fade-in">
                     <div class="flex justify-between mb-4">
-                        <h3 class="font-bold text-lg">Master User</h3>
-                        <button onclick="showModal('modal-user')" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"><i class="fas fa-plus mr-2"></i> Tambah</button>
+                        <h3 class="font-bold text-lg">Master User & Hak Akses</h3>
+                        <button onclick="openUserModal()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"><i class="fas fa-plus mr-2"></i> Tambah User</button>
                     </div>
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-3">Username</th><th class="p-3">Role</th><th class="p-3">Departemen</th><th class="p-3">Aksi</th></tr></thead><tbody id="user-table-body"></tbody></table>
+                    <div class="bg-white rounded-lg shadow p-6 overflow-x-auto">
+                        <table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-3">Username</th><th class="p-3">Email</th><th class="p-3">Role</th><th class="p-3">Departemen</th><th class="p-3">Akses Menu</th><th class="p-3">Aksi</th></tr></thead><tbody id="user-table-body"></tbody></table>
                     </div>
                 </div>
 
@@ -217,13 +223,24 @@
 
     <!-- Modal User -->
     <div id="modal-user" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-lg w-96 shadow-2xl">
-            <h3 class="text-xl font-bold mb-4">Tambah User</h3>
-            <input type="text" id="inp-user-uname" class="w-full border p-2 rounded mb-2" placeholder="Username">
-            <input type="password" disabled id="inp-user-pass" class="w-full border p-2 rounded mb-2" placeholder="Password">
-            <select id="inp-user-role" class="w-full border p-2 rounded mb-2"><option value="Admin">Admin</option><option value="User">User (Kepala Bagian)</option><option value="Auditor">Auditor</option></select>
-            <select id="inp-user-dept" class="w-full border p-2 rounded mb-4 dept-select"></select>
-            <div class="flex justify-end space-x-2"><button onclick="hideModal('modal-user')" class="px-4 py-2 bg-gray-300 rounded">Batal</button><button onclick="addUser()" class="px-4 py-2 bg-blue-600 text-white rounded">Simpan</button></div>
+        <div class="bg-white p-6 rounded-lg w-[28rem] max-h-[90vh] overflow-y-auto shadow-2xl">
+            <h3 id="user-modal-title" class="text-xl font-bold mb-4">Tambah User</h3>
+            <input type="email" id="inp-user-email" class="w-full border p-2 rounded mb-2" placeholder="Email (untuk login)">
+            <input type="text" id="inp-user-uname" class="w-full border p-2 rounded mb-2" placeholder="Username / nama tampilan">
+            <input type="password" id="inp-user-pass" class="w-full border p-2 rounded mb-2" placeholder="Password (min. 8 karakter)" autocomplete="new-password">
+            <select id="inp-user-role" onchange="if(!editingUserId) buildAccessGrid(defaultPerms(this.value))" class="w-full border p-2 rounded mb-2"><option value="User">User (Kepala Bagian)</option><option value="Auditor">Auditor</option><option value="Admin">Admin</option></select>
+            <select id="inp-user-dept" class="w-full border p-2 rounded mb-3 dept-select"></select>
+            <p class="text-sm font-bold mb-1">Akses per menu <span class="font-normal text-gray-500">(Admin selalu akses penuh)</span></p>
+            <div id="access-grid" class="space-y-1 mb-4 border rounded p-3 bg-gray-50"></div>
+            <div class="flex justify-end space-x-2"><button onclick="hideModal('modal-user')" class="px-4 py-2 bg-gray-300 rounded">Batal</button><button onclick="saveUser()" class="px-4 py-2 bg-blue-600 text-white rounded">Simpan</button></div>
+        </div>
+    </div>
+
+    <!-- Modal Lihat OPL -->
+    <div id="modal-opl-view" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg w-[40rem] max-w-[95vw] max-h-[92vh] overflow-y-auto shadow-2xl">
+            <div class="flex justify-between items-start mb-3"><h3 id="opl-view-title" class="text-xl font-bold"></h3><button onclick="hideModal('modal-opl-view')" class="keep-read text-gray-500 hover:text-gray-800 text-xl"><i class="fas fa-times"></i></button></div>
+            <div id="opl-view-body"></div>
         </div>
     </div>
 
@@ -280,7 +297,7 @@
             const [d, o, u] = await Promise.all([
                 sb.from('departments').select('name').order('name'),
                 sb.from('opls').select('*').order('id'),
-                sb.from('profiles').select('username, role, dept').order('username')
+                sb.from('profiles').select('id, email, username, role, dept, permissions').order('username')
             ]);
             if (d.error || o.error) throw new Error((d.error || o.error).message);
             departments = d.data.map(x => x.name);
@@ -291,7 +308,7 @@
         }
 
         async function enterApp(session) {
-            const { data: prof, error } = await sb.from('profiles').select('username, role, dept').eq('id', session.user.id).single();
+            const { data: prof, error } = await sb.from('profiles').select('username, role, dept, permissions').eq('id', session.user.id).single();
             if (error || !prof) { await sb.auth.signOut(); return showLoginError('Akun belum terdaftar di sistem. Hubungi Admin.'); }
             currentUser = prof;
             try { await loadData(); } catch (e) { await sb.auth.signOut(); return showLoginError('Gagal memuat data: ' + e.message); }
@@ -301,7 +318,10 @@
             if (prof.role === 'Admin') document.getElementById('btn-trigger-opl').classList.remove('hidden');
             else document.getElementById('btn-trigger-opl').classList.add('hidden');
             refreshDeptDropdowns();
-            showSection('dashboard');
+            applyMenuAccess();
+            const first = MENUS.find(([k]) => perm(k) !== 'none');
+            if (!first) { await sb.auth.signOut(); currentUser = null; document.getElementById('app-view').classList.add('hidden'); document.getElementById('login-view').classList.remove('hidden'); return showLoginError('Akun Anda belum diberi akses menu. Hubungi Admin.'); }
+            showSection(first[0]);
         }
 
         async function handleLogin() {
@@ -327,7 +347,7 @@
         function showSection(sectionName) {
             document.querySelectorAll('.section').forEach(el => el.classList.add('hidden'));
             document.getElementById(`sec-${sectionName}`).classList.remove('hidden');
-            const titles = { 'dashboard': 'Dashboard', 'master-dept': 'Master Departemen', 'master-user': 'Master User', 'opl-master': 'Master OPL', 'reporting': 'Pelaporan OPL', 'audit': 'Audit & Penilaian', 'tickets': 'Tiket CAPA', 'recap': 'Rekapitulasi' };
+            const titles = { 'dashboard': 'Dashboard', 'master-dept': 'Master Departemen', 'master-user': 'Master User', 'opl-master': 'Master OPL', 'reporting': 'Pelaporan OPL', 'audit': 'Audit & Penilaian', 'tickets': 'Tiket CAPA', 'recap': 'Rekapitulasi', 'opl-saya': 'OPL Saya' };
             document.getElementById('page-title').innerText = titles[sectionName];
             if(sectionName === 'dashboard') renderDashboard();
             if(sectionName === 'master-dept') renderDeptTable();
@@ -337,6 +357,7 @@
             if(sectionName === 'audit') renderAuditSection();
             if(sectionName === 'tickets') renderTickets();
             if(sectionName === 'recap') renderRecap();
+            if(sectionName === 'opl-saya') renderOplSaya();
         }
 
         function showModal(id) { document.getElementById(id).classList.remove('hidden'); }
@@ -371,12 +392,6 @@
         function deleteDept(name) { if(confirm(`Hapus ${name}?`)) { departments = departments.filter(d => d !== name); delete scores[name]; refreshDeptDropdowns(); renderDeptTable(); } }
 
         // --- MASTER USER ---
-        function renderUserTable() {
-            let html = ''; users.forEach(u => { html += `<tr class="border-b"><td class="p-3">${u.username}</td><td class="p-3">${u.role}</td><td class="p-3">${u.dept}</td><td class="p-3"><button onclick="deleteUser('${u.username}')" class="text-red-500 hover:underline"><i class="fas fa-trash"></i></button></td></tr>`; });
-            document.getElementById('user-table-body').innerHTML = html;
-        }
-        function addUser() { hideModal('modal-user'); alert('Akun user dibuat di Supabase (Authentication → Add user), lalu didaftarkan di tabel profiles. Password tidak disimpan di aplikasi.'); }
-        function deleteUser(uname) { alert('Penghapusan user dilakukan lewat Supabase (Authentication).'); }
 
         // --- MASTER OPL ---
         async function createNewOPL() {
@@ -530,6 +545,96 @@
         }
         function renderRecap() {
             let html = ''; for(const dept in scores) { const s = scores[dept]; html += `<tr class="border-b"><td class="p-3 font-bold">${dept}</td><td class="p-3">${s.base}%</td><td class="p-3 text-red-600 font-medium">-${s.penalty}%</td><td class="p-3 font-bold ${s.final < 50 ? 'text-red-600' : 'text-green-600'}">${s.final}%</td></tr>`; } document.getElementById('recap-table-body').innerHTML = html;
+        }
+
+        // --- HAK AKSES MENU ---
+        const MENUS = [['dashboard','Dashboard'],['master-dept','Departemen'],['master-user','User'],['opl-master','Master OPL'],['opl-saya','OPL Saya'],['reporting','Pelaporan'],['audit','Audit'],['tickets','Tiket CAPA'],['recap','Rekapitulasi']];
+        const LEVEL_LABEL = { none: 'Tidak ada', read: 'Lihat saja', input: 'Input' };
+        function esc(v) { return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+        function perm(k) { if (!currentUser) return 'none'; if (currentUser.role === 'Admin') return 'input'; return (currentUser.permissions || {})[k] || 'none'; }
+        function applyMenuAccess() {
+            document.querySelectorAll('.nav-btn').forEach(b => { const m = (b.getAttribute('onclick') || '').match(/showSection\('([^']+)'\)/); if (m) b.classList.toggle('hidden', perm(m[1]) === 'none'); });
+            document.getElementById('btn-trigger-opl').classList.toggle('hidden', perm('opl-master') !== 'input');
+        }
+        const _showSection = showSection;
+        showSection = function (name) {
+            if (perm(name) === 'none') return alert('Anda tidak punya akses ke menu ini.');
+            _showSection(name);
+            const sec = document.getElementById('sec-' + name);
+            sec.querySelectorAll('.ro-note').forEach(n => n.remove());
+            if (perm(name) === 'read') {
+                sec.querySelectorAll('button:not(.keep-read), input, select, textarea').forEach(e => e.disabled = true);
+                sec.insertAdjacentHTML('afterbegin', '<div class="ro-note bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm p-2 rounded mb-3"><i class="fas fa-eye mr-1"></i> Mode lihat saja: Anda tidak dapat mengubah data di menu ini.</div>');
+            }
+        };
+
+        // --- OPL SAYA ---
+        function renderOplSaya() {
+            const all = currentUser.role === 'Admin' || currentUser.dept === 'ALL';
+            const list = all ? opls : opls.filter(o => o.dept === currentUser.dept);
+            document.getElementById('opl-saya-info').innerText = all ? 'Semua departemen' : 'Departemen: ' + currentUser.dept;
+            document.getElementById('opl-saya-list').innerHTML = list.map(o => {
+                const exp = o.expiryDate && (new Date(o.expiryDate) - new Date()) < 14 * 86400000;
+                return `<div class="bg-white p-4 rounded-lg shadow border-l-4 ${o.reportType === 'Harian' ? 'border-green-500' : 'border-purple-500'}">
+                    <div class="flex justify-between items-start"><div><p class="font-mono text-xs text-gray-500">${esc(o.id)} · ${esc(o.dept)}</p><h4 class="font-bold text-blue-800">${esc(o.name)}</h4><p class="text-sm text-gray-600">${esc(o.case)}</p></div><span class="text-xs px-2 py-1 rounded font-bold ${o.reportType === 'Harian' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'}">${esc(o.reportType)}</span></div>
+                    <div class="flex justify-between items-center mt-3"><span class="text-xs ${exp ? 'text-red-600 font-bold' : 'text-gray-500'}">Berlaku s/d ${esc(o.expiryDate || '-')}</span><button onclick="lihatOpl('${esc(o.id)}')" class="keep-read bg-blue-600 text-white text-sm px-3 py-1 rounded hover:bg-blue-700"><i class="fas fa-eye mr-1"></i> Lihat OPL</button></div></div>`;
+            }).join('') || '<p class="text-gray-500 italic">Belum ada OPL untuk bagian Anda.</p>';
+        }
+        function lihatOpl(id) {
+            const o = opls.find(x => x.id === id); if (!o) return;
+            document.getElementById('opl-view-title').innerText = `${o.id} - ${o.name}`;
+            document.getElementById('opl-view-body').innerHTML = `
+                <div class="grid grid-cols-2 gap-2 text-sm mb-3"><p><b>Case:</b> ${esc(o.case)}</p><p><b>Bagian:</b> ${esc(o.dept)}</p><p><b>Tipe laporan:</b> ${esc(o.reportType)}</p><p><b>Status:</b> ${esc(o.status)}</p><p><b>Dibuat:</b> ${esc(o.creationDate)}</p><p><b>Berlaku s/d:</b> ${esc(o.expiryDate || '-')}</p></div>
+                ${o.image ? `<img src="${esc(o.image)}" class="w-full rounded border">` : '<p class="text-gray-500 italic">Gambar OPL belum tersedia.</p>'}`;
+            showModal('modal-opl-view');
+        }
+
+        // --- MASTER USER ---
+        let editingUserId = null;
+        function defaultPerms(role) {
+            if (role === 'Auditor') return { dashboard: 'read', 'opl-master': 'read', 'opl-saya': 'read', audit: 'input', tickets: 'read', recap: 'read' };
+            if (role === 'Admin') return Object.fromEntries(MENUS.map(([k]) => [k, 'input']));
+            return { dashboard: 'read', 'opl-saya': 'read', reporting: 'input', tickets: 'input', recap: 'read' };
+        }
+        function buildAccessGrid(p) {
+            document.getElementById('access-grid').innerHTML = MENUS.map(([k, l]) => `<div class="flex justify-between items-center text-sm"><span>${l}</span><select data-menu="${k}" class="border p-1 rounded">${Object.entries(LEVEL_LABEL).map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select></div>`).join('');
+            document.querySelectorAll('#access-grid select').forEach(sel => sel.value = (p || {})[sel.dataset.menu] || 'none');
+        }
+        function renderUserTable() {
+            document.getElementById('user-table-body').innerHTML = users.map(u => {
+                const summary = u.role === 'Admin' ? 'Akses penuh' : MENUS.filter(([k]) => (u.permissions || {})[k] && u.permissions[k] !== 'none').map(([k, l]) => `${l} (${u.permissions[k] === 'input' ? 'input' : 'lihat'})`).join(', ') || '<i class="text-red-500">Belum ada akses</i>';
+                return `<tr class="border-b"><td class="p-3 font-bold">${esc(u.username)}</td><td class="p-3 text-sm">${esc(u.email || '-')}</td><td class="p-3">${esc(u.role)}</td><td class="p-3">${esc(u.dept)}</td><td class="p-3 text-xs text-gray-600">${u.role === 'Admin' ? summary : summary}</td><td class="p-3"><button onclick="openUserModal('${esc(u.id)}')" class="text-indigo-600 hover:underline text-sm"><i class="fas fa-edit mr-1"></i>Atur</button></td></tr>`;
+            }).join('');
+        }
+        function openUserModal(id) {
+            editingUserId = id || null;
+            const u = users.find(x => x.id === id);
+            document.getElementById('user-modal-title').innerText = u ? 'Atur User: ' + u.username : 'Tambah User';
+            ['inp-user-email', 'inp-user-uname', 'inp-user-pass'].forEach(i => document.getElementById(i).value = '');
+            document.getElementById('inp-user-email').disabled = !!u; document.getElementById('inp-user-uname').disabled = !!u;
+            document.getElementById('inp-user-pass').classList.toggle('hidden', !!u);
+            if (u) { document.getElementById('inp-user-email').value = u.email || ''; document.getElementById('inp-user-uname').value = u.username; }
+            document.getElementById('inp-user-role').value = u ? u.role : 'User';
+            document.getElementById('inp-user-dept').value = u ? u.dept : (departments[0] || 'ALL');
+            buildAccessGrid(u ? u.permissions : defaultPerms('User'));
+            showModal('modal-user');
+        }
+        async function saveUser() {
+            const role = document.getElementById('inp-user-role').value, dept = document.getElementById('inp-user-dept').value;
+            const permissions = {}; document.querySelectorAll('#access-grid select').forEach(sel => { if (sel.value !== 'none') permissions[sel.dataset.menu] = sel.value; });
+            if (role === 'User' && dept === 'ALL') return alert('User (Kepala Bagian) harus dipilih satu departemen, bukan ALL.');
+            let error;
+            if (editingUserId) {
+                if (editingUserId === currentUser.id && role !== 'Admin') return alert('Anda tidak bisa menurunkan role akun Anda sendiri.');
+                ({ error } = await sb.from('profiles').update({ role, dept, permissions }).eq('id', editingUserId));
+            } else {
+                const email = document.getElementById('inp-user-email').value.trim(), username = document.getElementById('inp-user-uname').value.trim(), password = document.getElementById('inp-user-pass').value;
+                if (!email || !username || password.length < 8) return alert('Email, username, dan password (min. 8 karakter) wajib diisi.');
+                const res = await sb.functions.invoke('create-user', { body: { email, username, password, role, dept, permissions } });
+                error = res.error || (res.data && res.data.error ? { message: res.data.error } : null);
+            }
+            if (error) return alert('Gagal menyimpan: ' + error.message);
+            hideModal('modal-user'); await loadData(); renderUserTable(); alert('User berhasil disimpan.');
         }
     </script>
 </body>
