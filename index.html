@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ERP System - Monitoring OPL & CAPA</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -32,12 +33,12 @@
             </div>
             <div id="login-error" class="bg-red-100 text-red-700 p-2 rounded mb-4 hidden text-sm"></div>
             <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2">Username</label>
-                <input id="login-user" type="text" value="admin" class="w-full px-3 py-2 border rounded-lg">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+                <input id="login-user" type="email" autocomplete="username" placeholder="nama@perusahaan.com" class="w-full px-3 py-2 border rounded-lg">
             </div>
             <div class="mb-6">
                 <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
-                <input id="login-pass" type="password" value="1234" class="w-full px-3 py-2 border rounded-lg">
+                <input id="login-pass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')handleLogin()" class="w-full px-3 py-2 border rounded-lg">
             </div>
             <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Login</button>
         </div>
@@ -219,7 +220,7 @@
         <div class="bg-white p-6 rounded-lg w-96 shadow-2xl">
             <h3 class="text-xl font-bold mb-4">Tambah User</h3>
             <input type="text" id="inp-user-uname" class="w-full border p-2 rounded mb-2" placeholder="Username">
-            <input type="password" id="inp-user-pass" class="w-full border p-2 rounded mb-2" placeholder="Password">
+            <input type="password" disabled id="inp-user-pass" class="w-full border p-2 rounded mb-2" placeholder="Password">
             <select id="inp-user-role" class="w-full border p-2 rounded mb-2"><option value="Admin">Admin</option><option value="User">User (Kepala Bagian)</option><option value="Auditor">Auditor</option></select>
             <select id="inp-user-dept" class="w-full border p-2 rounded mb-4 dept-select"></select>
             <div class="flex justify-end space-x-2"><button onclick="hideModal('modal-user')" class="px-4 py-2 bg-gray-300 rounded">Batal</button><button onclick="addUser()" class="px-4 py-2 bg-blue-600 text-white rounded">Simpan</button></div>
@@ -252,18 +253,11 @@
 
     <script>
         // --- DATA STORE ---
-        let departments = ['PRODUKSI', 'QC', 'MTC', 'PPIC', 'FG'];
+        let departments = [];
         
-        let users = [
-            { username: 'admin', password: '1234', role: 'Admin', dept: 'ALL' },
-            { username: 'spv_prod', password: '1234', role: 'User', dept: 'PRODUKSI' },
-            { username: 'auditor', password: '1234', role: 'Auditor', dept: 'ALL' }
-        ];
+        let users = []; // dimuat dari tabel profiles (tanpa password)
 
-        let opls = [
-            { id: 'OPL001', case: 'Barmark Terbalik', name: 'SOP Pengecekan Packing', dept: 'PRODUKSI', reportType: 'Harian', creationDate: '2024-02-10', expiryDate: '2024-08-10', status: 'OPEN', image: null },
-            { id: 'OPL002', case: 'Mixing Tercampur', name: 'SOP Penanganan Barang Campur', dept: 'PRODUKSI', reportType: 'Kasus', creationDate: '2024-03-13', expiryDate: '2024-09-13', status: 'ON PROGRESS', image: null }
-        ];
+        let opls = [];
 
         let scores = {};
         let audits = [];
@@ -275,24 +269,60 @@
         initScores();
 
         // --- HELPERS ---
-        function handleLogin() {
-            const u = document.getElementById('login-user').value;
-            const p = document.getElementById('login-pass').value;
-            const user = users.find(x => x.username === u && x.password === p);
-            if (user) {
-                currentUser = user;
-                document.getElementById('login-view').classList.add('hidden');
-                document.getElementById('app-view').classList.remove('hidden');
-                document.getElementById('user-info-sidebar').innerHTML = `<i class="fas fa-user mr-2"></i> ${user.username} <br><i class="fas fa-tag mr-2"></i> ${user.role} <br><i class="fas fa-building mr-2"></i> ${user.dept}`;
-                if(currentUser.role === 'Admin') document.getElementById('btn-trigger-opl').classList.remove('hidden');
-                else document.getElementById('btn-trigger-opl').classList.add('hidden');
-                refreshDeptDropdowns();
-                showSection('dashboard');
-            } else {
-                const errDiv = document.getElementById('login-error'); errDiv.classList.remove('hidden'); errDiv.innerText = 'Username atau Password salah!';
-            }
+        // --- SUPABASE ---
+        const SUPABASE_URL = 'https://zcadktvxbnsfpjeddljw.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjYWRrdHZ4Ym5zZnBqZWRkbGp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzNTAyMjYsImV4cCI6MjEwNjkyNjIyNn0.D0UlmgS9WyvAMP0I_ifE6YrkIvpTa3qN6l54sXGTqp4';
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        function showLoginError(msg) { const e = document.getElementById('login-error'); e.classList.remove('hidden'); e.innerText = msg; }
+
+        async function loadData() {
+            const [d, o, u] = await Promise.all([
+                sb.from('departments').select('name').order('name'),
+                sb.from('opls').select('*').order('id'),
+                sb.from('profiles').select('username, role, dept').order('username')
+            ]);
+            if (d.error || o.error) throw new Error((d.error || o.error).message);
+            departments = d.data.map(x => x.name);
+            opls = o.data.map(x => ({ id: x.id, case: x.case_name, name: x.name, dept: x.dept, reportType: x.report_type,
+                creationDate: x.creation_date, expiryDate: x.expiry_date, status: x.status, image: x.image_url }));
+            users = u.data || [];
+            initScores();
         }
-        function handleLogout() { currentUser = null; document.getElementById('app-view').classList.add('hidden'); document.getElementById('login-view').classList.remove('hidden'); }
+
+        async function enterApp(session) {
+            const { data: prof, error } = await sb.from('profiles').select('username, role, dept').eq('id', session.user.id).single();
+            if (error || !prof) { await sb.auth.signOut(); return showLoginError('Akun belum terdaftar di sistem. Hubungi Admin.'); }
+            currentUser = prof;
+            try { await loadData(); } catch (e) { await sb.auth.signOut(); return showLoginError('Gagal memuat data: ' + e.message); }
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('app-view').classList.remove('hidden');
+            document.getElementById('user-info-sidebar').innerHTML = `<i class="fas fa-user mr-2"></i> ${prof.username} <br><i class="fas fa-tag mr-2"></i> ${prof.role} <br><i class="fas fa-building mr-2"></i> ${prof.dept}`;
+            if (prof.role === 'Admin') document.getElementById('btn-trigger-opl').classList.remove('hidden');
+            else document.getElementById('btn-trigger-opl').classList.add('hidden');
+            refreshDeptDropdowns();
+            showSection('dashboard');
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('login-user').value.trim();
+            const pass = document.getElementById('login-pass').value;
+            if (!email || !pass) return showLoginError('Email dan password wajib diisi.');
+            const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+            if (error) return showLoginError('Email atau password salah.');
+            document.getElementById('login-error').classList.add('hidden');
+            await enterApp(data.session);
+        }
+
+        async function handleLogout() {
+            await sb.auth.signOut(); currentUser = null;
+            document.getElementById('login-pass').value = '';
+            document.getElementById('app-view').classList.add('hidden');
+            document.getElementById('login-view').classList.remove('hidden');
+        }
+
+        // Pulihkan sesi jika halaman di-refresh
+        sb.auth.getSession().then(({ data }) => { if (data.session) enterApp(data.session); });
 
         function showSection(sectionName) {
             document.querySelectorAll('.section').forEach(el => el.classList.add('hidden'));
@@ -345,11 +375,8 @@
             let html = ''; users.forEach(u => { html += `<tr class="border-b"><td class="p-3">${u.username}</td><td class="p-3">${u.role}</td><td class="p-3">${u.dept}</td><td class="p-3"><button onclick="deleteUser('${u.username}')" class="text-red-500 hover:underline"><i class="fas fa-trash"></i></button></td></tr>`; });
             document.getElementById('user-table-body').innerHTML = html;
         }
-        function addUser() {
-            let u = document.getElementById('inp-user-uname').value; let p = document.getElementById('inp-user-pass').value; let r = document.getElementById('inp-user-role').value; let d = document.getElementById('inp-user-dept').value;
-            if(!u || !p) return alert('Username & Password wajib diisi'); users.push({ username: u, password: p, role: r, dept: d }); hideModal('modal-user'); renderUserTable();
-        }
-        function deleteUser(uname) { if(uname === 'admin') return alert('Tidak bisa hapus admin utama'); users = users.filter(u => u.username !== uname); renderUserTable(); }
+        function addUser() { hideModal('modal-user'); alert('Akun user dibuat di Supabase (Authentication → Add user), lalu didaftarkan di tabel profiles. Password tidak disimpan di aplikasi.'); }
+        function deleteUser(uname) { alert('Penghapusan user dilakukan lewat Supabase (Authentication).'); }
 
         // --- MASTER OPL ---
         async function createNewOPL() {
