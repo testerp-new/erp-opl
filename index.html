@@ -64,6 +64,7 @@
                 <button onclick="showSection('opl-saya')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-folder-open mr-2"></i> OPL Saya</button>
                 <button onclick="showSection('reporting')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-paper-plane mr-2"></i> Pelaporan</button>
                 <button onclick="showSection('audit')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-search mr-2"></i> Audit</button>
+                <button onclick="showSection('recurrence')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-rotate-right mr-2"></i> Kejadian Berulang</button>
                 <button onclick="showSection('tickets')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700">
                     <i class="fas fa-ticket-alt mr-2"></i> Tiket CAPA <span id="ticket-badge" class="ml-2 bg-red-500 text-white rounded-full h-5 w-5 inline-flex items-center justify-center text-xs hidden">0</span>
                 </button>
@@ -209,10 +210,29 @@
                 </div>
 
                 <!-- TIKET CAPA -->
+                <div id="sec-recurrence" class="section hidden fade-in">
+                    <div class="bg-white rounded-lg shadow p-6 mb-6">
+                        <h3 class="font-bold text-lg mb-1">Lapor Kejadian Berulang</h3>
+                        <p class="text-sm text-gray-500 mb-4">Gunakan jika masalah yang sudah ditangani sebuah OPL ternyata terjadi lagi. Tiket permintaan update OPL otomatis dikirim ke bagian pemilik OPL.</p>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div><label class="block text-sm font-bold mb-1">OPL</label><select id="rec-opl" class="w-full border p-2 rounded"></select></div>
+                            <div><label class="block text-sm font-bold mb-1">Tanggal Kejadian</label><input type="date" id="rec-date" class="w-full border p-2 rounded"></div>
+                            <div><label class="block text-sm font-bold mb-1">Bagian Tempat Kejadian</label><select id="rec-dept" class="w-full border p-2 rounded dept-select"></select></div>
+                            <div><label class="block text-sm font-bold mb-1 text-red-600"><i class="fas fa-camera mr-1"></i> Foto Bukti (wajib)</label><input type="file" id="rec-img" accept="image/*" capture="environment" class="w-full border p-2 rounded"></div>
+                        </div>
+                        <label class="block text-sm font-bold mb-1">Uraian Kejadian</label><textarea id="rec-desc" rows="3" class="w-full border p-2 rounded mb-4"></textarea>
+                        <button onclick="submitRecurrence()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"><i class="fas fa-paper-plane mr-2"></i> Kirim Laporan</button>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6 overflow-x-auto"><h4 class="font-bold mb-3">Riwayat Kejadian Berulang</h4>
+                        <table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-3">Tanggal</th><th class="p-3">OPL</th><th class="p-3">Bagian Kejadian</th><th class="p-3">Uraian</th><th class="p-3">Foto</th></tr></thead><tbody id="rec-body"></tbody></table></div>
+                </div>
+
                 <div id="sec-tickets" class="section hidden fade-in">
                     <div class="bg-white p-6 rounded-lg shadow">
                         <h3 class="font-bold text-lg mb-4">Tiket CAPA</h3>
                         <div id="capa-tickets-list" class="space-y-4"></div>
+                        <h4 class="font-bold text-lg mt-8 mb-3">Permintaan Update OPL <span class="text-sm font-normal text-gray-500">(akibat kejadian berulang)</span></h4>
+                        <div id="update-req-list" class="space-y-4"></div>
                     </div>
                 </div>
 
@@ -257,6 +277,16 @@
         <div class="bg-white p-6 rounded-lg w-[40rem] max-w-[95vw] max-h-[92vh] overflow-y-auto shadow-2xl">
             <div class="flex justify-between items-start mb-3"><h3 id="opl-view-title" class="text-xl font-bold"></h3><button onclick="hideModal('modal-opl-view')" class="keep-read text-gray-500 hover:text-gray-800 text-xl"><i class="fas fa-times"></i></button></div>
             <div id="opl-view-body"></div>
+        </div>
+    </div>
+
+    <!-- Modal Update OPL -->
+    <div id="modal-upd" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg w-[34rem] max-w-[95vw] shadow-2xl">
+            <h3 id="upd-title" class="text-xl font-bold mb-1">Rencana Update OPL</h3><p id="upd-sub" class="text-sm text-gray-600 mb-3"></p>
+            <label class="block text-sm font-bold mb-1">Apa yang akan diubah / diperbaiki pada OPL</label><textarea id="upd-resp" rows="5" class="w-full border p-2 rounded mb-3"></textarea>
+            <label class="block text-sm font-bold mb-1">Target Selesai</label><input type="date" id="upd-target" class="w-full border p-2 rounded mb-4">
+            <div class="flex justify-end space-x-2"><button onclick="hideModal('modal-upd')" class="px-4 py-2 bg-gray-300 rounded">Batal</button><button onclick="saveUpd()" class="px-4 py-2 bg-blue-600 text-white rounded">Kirim</button></div>
         </div>
     </div>
 
@@ -305,6 +335,7 @@
 
         let scores = {};
         let findingCats = [];
+        let recurrences = [], updateReqs = [];
         function computeScores() {
             scores = {}; departments.forEach(d => scores[d] = { base: 100, penalty: 0, final: 100 });
             const ym = new Date().toISOString().slice(0, 7);
@@ -346,6 +377,10 @@
             findingCats = fc.data;
             audits = au.data.map(a => ({ id: a.id, oplId: a.opl_id, dept: a.dept, finding: a.finding, keterangan: a.keterangan, isRepeated: a.is_repeated, docNo: a.doc_no, date: a.audit_date }));
             capaTickets = tk.data.map(t => ({ id: t.id, oplId: t.opl_id, dept: t.dept, finding: t.finding, keterangan: t.keterangan, status: t.status, tp: t.tindakan_perbaikan, tc: t.tindakan_pencegahan, target: t.target_date, ba: t.audits || {} }));
+            const [rc, ur] = await Promise.all([sb.from('recurrence_reports').select('*').order('id', { ascending: false }), sb.from('opl_update_requests').select('*').order('id', { ascending: false })]);
+            if (rc.error || ur.error) throw new Error((rc.error || ur.error).message);
+            recurrences = rc.data.map(r => ({ id: r.id, oplId: r.opl_id, date: r.occurred_on, dept: r.occurred_dept, desc: r.description, image: r.image_url }));
+            updateReqs = ur.data.map(r => ({ id: r.id, recId: r.recurrence_id, oplId: r.opl_id, dept: r.dept, status: r.status, resp: r.response, target: r.target_date }));
             computeScores(); updateTicketBadge();
         }
 
@@ -389,7 +424,7 @@
         function showSection(sectionName) {
             document.querySelectorAll('.section').forEach(el => el.classList.add('hidden'));
             document.getElementById(`sec-${sectionName}`).classList.remove('hidden');
-            const titles = { 'dashboard': 'Dashboard', 'master-dept': 'Master Departemen', 'master-user': 'Master User', 'opl-master': 'Master OPL', 'reporting': 'Pelaporan OPL', 'audit': 'Audit & Penilaian', 'tickets': 'Tiket CAPA', 'recap': 'Rekapitulasi', 'opl-saya': 'OPL Saya', 'master-temuan': 'Master Temuan' };
+            const titles = { 'dashboard': 'Dashboard', 'master-dept': 'Master Departemen', 'master-user': 'Master User', 'opl-master': 'Master OPL', 'reporting': 'Pelaporan OPL', 'audit': 'Audit & Penilaian', 'tickets': 'Tiket CAPA', 'recap': 'Rekapitulasi', 'opl-saya': 'OPL Saya', 'master-temuan': 'Master Temuan', 'recurrence': 'Kejadian Berulang' };
             document.getElementById('page-title').innerText = titles[sectionName];
             if(sectionName === 'dashboard') renderDashboard();
             if(sectionName === 'master-dept') renderDeptTable();
@@ -401,6 +436,7 @@
             if(sectionName === 'recap') renderRecap();
             if(sectionName === 'opl-saya') renderOplSaya();
             if(sectionName === 'master-temuan') renderFindingCats();
+            if(sectionName === 'recurrence') renderRecurrence();
         }
 
         function showModal(id) { document.getElementById(id).classList.remove('hidden'); }
@@ -577,7 +613,7 @@
             await loadData(); renderAuditSection();
             alert(cat.final_category === 'OK' ? 'Audit tersimpan.' : 'Audit tersimpan. Tiket CAPA dikirim ke bagian ' + dept + '.');
         }
-        function updateTicketBadge() { const openTickets = capaTickets.filter(t => t.status === 'OPEN').length; const badge = document.getElementById('ticket-badge'); badge.innerText = openTickets; if(openTickets > 0) badge.classList.remove('hidden'); else badge.classList.add('hidden'); }
+        function updateTicketBadge() { const openTickets = capaTickets.filter(t => t.status === 'OPEN').length + updateReqs.filter(t => t.status === 'OPEN').length; const badge = document.getElementById('ticket-badge'); badge.innerText = openTickets; if(openTickets > 0) badge.classList.remove('hidden'); else badge.classList.add('hidden'); }
 
         // --- TIKET CAPA ---
         const fmtDate = d => d ? new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-';
@@ -641,7 +677,7 @@
         }
 
         // --- HAK AKSES MENU ---
-        const MENUS = [['dashboard','Dashboard'],['master-dept','Departemen'],['master-user','User'],['opl-master','Master OPL'],['master-temuan','Master Temuan'],['opl-saya','OPL Saya'],['reporting','Pelaporan'],['audit','Audit'],['tickets','Tiket CAPA'],['recap','Rekapitulasi']];
+        const MENUS = [['dashboard','Dashboard'],['master-dept','Departemen'],['master-user','User'],['opl-master','Master OPL'],['master-temuan','Master Temuan'],['opl-saya','OPL Saya'],['reporting','Pelaporan'],['audit','Audit'],['recurrence','Kejadian Berulang'],['tickets','Tiket CAPA'],['recap','Rekapitulasi']];
         const LEVEL_LABEL = { none: 'Tidak ada', read: 'Lihat saja', input: 'Input' };
         function esc(v) { return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
         function perm(k) { if (!currentUser) return 'none'; if (currentUser.role === 'Admin') return 'input'; return (currentUser.permissions || {})[k] || 'none'; }
@@ -678,16 +714,16 @@
             document.getElementById('opl-view-title').innerText = `${o.id} - ${o.name}`;
             document.getElementById('opl-view-body').innerHTML = `
                 <div class="grid grid-cols-2 gap-2 text-sm mb-3"><p><b>Case:</b> ${esc(o.case)}</p><p><b>Bagian:</b> ${esc(o.dept)}</p><p><b>Tipe laporan:</b> ${esc(o.reportType)}</p><p><b>Status:</b> ${esc(o.status)}</p><p><b>Dibuat:</b> ${esc(o.creationDate)}</p><p><b>Berlaku s/d:</b> ${esc(o.expiryDate || '-')}</p></div>
-                ${o.image ? `<img src="${esc(o.image)}" class="w-full rounded border">` : '<p class="text-gray-500 italic">Gambar OPL belum tersedia.</p>'}`;
+                ${o.image ? `<img src="${esc(o.image)}" class="w-full rounded border">` : '<p class="text-gray-500 italic">Gambar OPL belum tersedia.</p>'}${oplHistoryHtml(o.id)}`;
             showModal('modal-opl-view');
         }
 
         // --- MASTER USER ---
         let editingUserId = null;
         function defaultPerms(role) {
-            if (role === 'Auditor') return { dashboard: 'read', 'opl-master': 'read', 'opl-saya': 'read', audit: 'input', tickets: 'input', recap: 'read' };
+            if (role === 'Auditor') return { dashboard: 'read', 'opl-master': 'read', 'opl-saya': 'read', audit: 'input', recurrence: 'input', tickets: 'input', recap: 'read' };
             if (role === 'Admin') return Object.fromEntries(MENUS.map(([k]) => [k, 'input']));
-            return { dashboard: 'read', 'opl-saya': 'read', reporting: 'input', tickets: 'input', recap: 'read' };
+            return { dashboard: 'read', 'opl-saya': 'read', reporting: 'input', recurrence: 'input', tickets: 'input', recap: 'read' };
         }
         function buildAccessGrid(p) {
             document.getElementById('access-grid').innerHTML = MENUS.map(([k, l]) => `<div class="flex justify-between items-center text-sm"><span>${l}</span><select data-menu="${k}" class="border p-1 rounded">${Object.entries(LEVEL_LABEL).map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select></div>`).join('');
@@ -743,6 +779,82 @@
             const c = findingCats.find(x => x.id === id); const { error } = await sb.from('finding_categories').update({ is_active: !c.is_active }).eq('id', id);
             if (error) return alert('Gagal: ' + error.message); await loadData(); renderFindingCats();
         }
+
+        // --- KEJADIAN BERULANG ---
+        function oplHistoryHtml(id) {
+            const h = recurrences.filter(r => r.oplId === id);
+            return `<div class="mt-4 border-t pt-3"><h4 class="font-bold text-sm mb-2">Riwayat Kejadian Berulang: ${h.length}x</h4>${h.length ? h.map(r => `<p class="text-sm py-1 border-b">${fmtDate(r.date)} · ${esc(r.dept || '-')} - ${esc(r.desc)}</p>`).join('') : '<p class="text-sm text-gray-500">Belum ada kejadian berulang.</p>'}</div>`;
+        }
+        function renderRecurrence() {
+            document.getElementById('rec-opl').innerHTML = '<option value="">-- Pilih OPL --</option>' + opls.map(o => `<option value="${esc(o.id)}">${esc(o.id)} - ${esc(o.name)} (${esc(o.dept)})</option>`).join('');
+            if (!document.getElementById('rec-date').value) document.getElementById('rec-date').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('rec-body').innerHTML = recurrences.map(r => { const o = opls.find(x => x.id === r.oplId) || {};
+                return `<tr class="border-b"><td class="p-3 text-sm">${fmtDate(r.date)}</td><td class="p-3 text-sm"><b>${esc(r.oplId)}</b> ${esc(o.name || '')}</td><td class="p-3 text-sm">${esc(r.dept || '-')}</td><td class="p-3 text-sm">${esc(r.desc)}</td><td class="p-3">${r.image ? `<img src="${esc(r.image)}" class="thumb" onclick="previewImage(this.src)">` : '-'}</td></tr>`; }).join('') || '<tr><td class="p-3 text-gray-500" colspan="5">Belum ada kejadian berulang.</td></tr>';
+        }
+        async function submitRecurrence() {
+            const g = id => document.getElementById(id).value.trim();
+            const oplId = g('rec-opl'), dept = g('rec-dept'), desc = g('rec-desc'), date = g('rec-date');
+            if (!oplId || !desc || !date) return alert('OPL, tanggal, dan uraian kejadian wajib diisi.');
+            if (!dept || dept === 'ALL') return alert('Pilih bagian tempat kejadian.');
+            const image = await compressImage('rec-img'); if (!image) return alert('Foto bukti wajib diupload.');
+            const { error } = await sb.from('recurrence_reports').insert({ opl_id: oplId, occurred_on: date, occurred_dept: dept, description: desc, image_url: image, reported_by: currentUser.id });
+            if (error) return alert('Gagal menyimpan: ' + error.message);
+            const owner = (opls.find(o => o.id === oplId) || {}).dept;
+            document.getElementById('rec-desc').value = ''; document.getElementById('rec-img').value = '';
+            await loadData(); renderRecurrence(); alert('Laporan tersimpan. Tiket permintaan update OPL dikirim ke bagian ' + owner + '.');
+        }
+
+        // --- PERMINTAAN UPDATE OPL (di halaman Tiket CAPA) ---
+        const UPD_LABEL = { OPEN: 'Menunggu rencana update', IN_PROGRESS: 'Rencana diisi, menunggu verifikasi', CLOSED: 'Selesai' };
+        function renderUpdateReqs() {
+            const canInput = perm('tickets') === 'input', reviewer = ['Admin', 'Auditor'].includes(currentUser.role), filler = ['Admin', 'User'].includes(currentUser.role);
+            document.getElementById('update-req-list').innerHTML = updateReqs.map(u => {
+                const o = opls.find(x => x.id === u.oplId) || {}, r = recurrences.find(x => x.id === u.recId) || {};
+                const badge = u.status === 'OPEN' ? 'bg-red-100 text-red-800' : (u.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800');
+                const btn = (fn, txt, cls) => `<button onclick="${fn}(${u.id})" class="${cls} px-3 py-1 rounded text-sm">${txt}</button>`;
+                return `<div class="border rounded-lg p-4 shadow-sm bg-white"><div class="flex justify-between items-start"><div><h4 class="font-bold text-indigo-700">Update OPL: ${esc(u.oplId)} - ${esc(o.name || '')}</h4><p class="text-sm mt-1"><strong>Bagian:</strong> ${esc(u.dept)} | <strong>Total kejadian berulang OPL ini:</strong> ${recurrences.filter(x => x.oplId === u.oplId).length}x</p></div><span class="px-3 py-1 rounded-full text-xs font-bold ${badge}">${UPD_LABEL[u.status]}</span></div>
+                    <div class="mt-3 bg-gray-50 p-3 rounded border"><p class="text-sm font-bold">Kejadian ${fmtDate(r.date)} di ${esc(r.dept || '-')}:</p><p class="text-sm text-gray-700">${esc(r.desc)}</p></div>
+                    ${u.resp ? `<div class="mt-3 text-sm"><p><b>Rencana / update OPL:</b> ${esc(u.resp)}</p><p><b>Target:</b> ${fmtDate(u.target)}</p></div>` : ''}
+                    <div class="mt-3 flex justify-end space-x-2">${canInput && filler && u.status !== 'CLOSED' ? btn('openUpd', u.status === 'OPEN' ? 'Isi Rencana Update' : 'Ubah Rencana', 'bg-blue-600 text-white hover:bg-blue-700') : ''}${canInput && reviewer && u.status === 'IN_PROGRESS' ? btn('closeUpd', 'Verifikasi & Tutup', 'bg-green-600 text-white hover:bg-green-700') : ''}</div></div>`;
+            }).join('') || '<p class="text-gray-500">Tidak ada permintaan update OPL.</p>';
+        }
+        const _renderTickets = renderTickets; renderTickets = function () { _renderTickets(); renderUpdateReqs(); };
+        let updEditId = null;
+        function openUpd(id) {
+            const u = updateReqs.find(x => x.id === id); updEditId = id;
+            document.getElementById('upd-sub').innerText = 'OPL ' + u.oplId; document.getElementById('upd-resp').value = u.resp || ''; document.getElementById('upd-target').value = u.target || '';
+            showModal('modal-upd');
+        }
+        async function saveUpd() {
+            const resp = document.getElementById('upd-resp').value.trim(), target = document.getElementById('upd-target').value;
+            if (!resp || !target) return alert('Rencana update dan target selesai wajib diisi.');
+            const { error } = await sb.from('opl_update_requests').update({ response: resp, target_date: target, status: 'IN_PROGRESS', submitted_at: new Date().toISOString() }).eq('id', updEditId);
+            if (error) return alert('Gagal: ' + error.message); hideModal('modal-upd'); await loadData(); renderTickets();
+        }
+        async function closeUpd(id) {
+            if (!confirm('Update OPL sudah diverifikasi dan tiket ditutup?')) return;
+            const u = updateReqs.find(x => x.id === id);
+            const { error } = await sb.from('opl_update_requests').update({ status: 'CLOSED', closed_at: new Date().toISOString() }).eq('id', id);
+            if (error) return alert('Gagal: ' + error.message);
+            if (perm('opl-master') === 'input' && confirm('Sekaligus tandai OPL ' + u.oplId + ' sebagai REVISI (masa berlaku 6 bulan dari hari ini)?')) {
+                const exp = new Date(); exp.setMonth(exp.getMonth() + 6);
+                await sb.from('opls').update({ creation_date: new Date().toISOString().slice(0, 10), expiry_date: exp.toISOString().slice(0, 10), status: 'REVISED' }).eq('id', u.oplId);
+            }
+            await loadData(); renderTickets();
+        }
+
+        // --- EFEKTIVITAS OPL (di Rekapitulasi) ---
+        function renderEff() {
+            const sec = document.getElementById('sec-recap');
+            if (!document.getElementById('eff-wrap')) sec.insertAdjacentHTML('beforeend', '<div id="eff-wrap" class="bg-white rounded-lg shadow p-6 mt-6 overflow-x-auto"></div>');
+            const rows = opls.map(o => {
+                const all = recurrences.filter(r => r.oplId === o.id), since = all.filter(r => r.date >= o.creationDate), last = all.map(r => r.date).sort().pop();
+                const st = since.length === 0 ? ['Efektif', 'bg-green-100 text-green-800'] : (since.length === 1 ? ['Perlu Ditinjau', 'bg-yellow-100 text-yellow-800'] : ['Tidak Efektif', 'bg-red-100 text-red-800']);
+                return `<tr class="border-b"><td class="p-3 text-sm"><b>${esc(o.id)}</b> ${esc(o.name)}</td><td class="p-3 text-sm">${esc(o.dept)}</td><td class="p-3 text-sm">${fmtDate(o.creationDate)}</td><td class="p-3 text-center">${all.length}x</td><td class="p-3 text-center">${since.length}x</td><td class="p-3 text-sm">${last ? fmtDate(last) : '-'}</td><td class="p-3"><span class="px-2 py-1 rounded text-xs font-bold ${st[1]}">${st[0]}</span></td></tr>`;
+            }).join('') || '<tr><td class="p-3 text-gray-500" colspan="7">Belum ada OPL.</td></tr>';
+            document.getElementById('eff-wrap').innerHTML = `<h3 class="font-bold text-lg mb-1">Efektivitas OPL</h3><p class="text-sm text-gray-500 mb-3">Status dihitung dari kejadian berulang sejak OPL versi saat ini berlaku (0 = Efektif, 1 = Perlu Ditinjau, 2 atau lebih = Tidak Efektif).</p><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-3">OPL</th><th class="p-3">Bagian</th><th class="p-3">Berlaku Sejak</th><th class="p-3">Total Riwayat</th><th class="p-3">Sejak Berlaku</th><th class="p-3">Kejadian Terakhir</th><th class="p-3">Status</th></tr></thead><tbody>${rows}</tbody></table>`;
+        }
+        const _renderRecap = renderRecap; renderRecap = function () { _renderRecap(); renderEff(); };
     </script>
 </body>
 </html>
