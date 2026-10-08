@@ -87,9 +87,9 @@
                 <!-- DASHBOARD -->
                 <div id="sec-dashboard" class="section fade-in">
                     <div class="grid grid-cols-3 gap-6 mb-6">
-                        <div class="bg-blue-600 text-white p-6 rounded-lg shadow"><h3 class="text-lg">Total OPL Aktif</h3><p class="text-4xl font-bold mt-2" id="stat-active-opl">0</p></div>
-                        <div class="bg-yellow-500 text-white p-6 rounded-lg shadow"><h3 class="text-lg">Akan Expired</h3><p class="text-4xl font-bold mt-2" id="stat-expiring-opl">0</p></div>
-                        <div class="bg-red-600 text-white p-6 rounded-lg shadow"><h3 class="text-lg">Tiket CAPA Open</h3><p class="text-4xl font-bold mt-2" id="stat-capa-tickets">0</p></div>
+                        <div onclick="showDashList('opl')" class="bg-blue-600 text-white p-6 rounded-lg shadow cursor-pointer hover:opacity-90" title="Klik untuk melihat daftar"><h3 class="text-lg">Total OPL Aktif</h3><p class="text-4xl font-bold mt-2" id="stat-active-opl">0</p></div>
+                        <div onclick="showDashList('expiring')" class="bg-yellow-500 text-white p-6 rounded-lg shadow cursor-pointer hover:opacity-90" title="Klik untuk melihat daftar"><h3 class="text-lg">Akan Expired</h3><p class="text-4xl font-bold mt-2" id="stat-expiring-opl">0</p></div>
+                        <div onclick="showDashList('capa')" class="bg-red-600 text-white p-6 rounded-lg shadow cursor-pointer hover:opacity-90" title="Klik untuk melihat daftar"><h3 class="text-lg">Tiket CAPA Open</h3><p class="text-4xl font-bold mt-2" id="stat-capa-tickets">0</p></div>
                     </div>
                     <div class="bg-white p-6 rounded-lg shadow"><h3 class="font-bold text-lg mb-4">Penilaian Bagian Bulan Ini</h3><div id="score-cards" class="grid grid-cols-4 gap-4"></div></div>
                 </div>
@@ -143,7 +143,7 @@
                 <!-- MASTER OPL -->
                 <div id="sec-opl-master" class="section hidden fade-in">
                     <div class="flex justify-between mb-4">
-                        <h3 class="font-bold text-lg">Master Data OPL</h3>
+                        <div class="flex items-center gap-3"><h3 class="font-bold text-lg">Master Data OPL</h3><select id="opl-filter-dept" onchange="renderOPLTable()" class="keep-read border p-2 rounded text-sm"><option value="">Semua bagian</option></select></div>
                         <button id="btn-trigger-opl" class="hidden bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" onclick="showModal('modal-opl')"><i class="fas fa-plus mr-2"></i> Input Temuan Awal (Trigger)</button>
                     </div>
                     <div class="bg-white rounded-lg shadow overflow-x-auto">
@@ -253,7 +253,7 @@
                 <!-- REKAP -->
                 <div id="sec-rekap-monitoring" class="section hidden fade-in">
                     <div class="bg-white rounded-lg shadow p-4 mb-4 flex flex-wrap gap-4 items-end">
-                        <div><label class="block text-sm font-bold mb-1">Tampilan</label><select id="rm-view" onchange="renderRekapMon()" class="keep-read border p-2 rounded"><option value="week">Per Minggu</option><option value="month">Per Bulan</option></select></div>
+                        <div><label class="block text-sm font-bold mb-1">Tampilan</label><select id="rm-view" onchange="renderRekapMon()" class="keep-read border p-2 rounded"><option value="day">Per Hari</option><option value="week" selected>Per Minggu</option><option value="month">Per Bulan</option></select></div>
                         <div id="rm-month-wrap"><label class="block text-sm font-bold mb-1">Bulan</label><input type="month" id="rm-month" onchange="renderRekapMon()" class="keep-read border p-2 rounded"></div>
                         <div id="rm-year-wrap" class="hidden"><label class="block text-sm font-bold mb-1">Tahun</label><input type="number" id="rm-year" min="2024" max="2100" onchange="renderRekapMon()" class="keep-read border p-2 rounded w-28"></div>
                         <div><label class="block text-sm font-bold mb-1">Bagian</label><select id="rm-dept" onchange="renderRekapMon()" class="keep-read border p-2 rounded"></select></div>
@@ -294,6 +294,28 @@
             <p class="text-sm font-bold mb-1">Akses per menu <span class="font-normal text-gray-500">(Admin selalu akses penuh)</span></p>
             <div id="access-grid" class="space-y-1 mb-4 border rounded p-3 bg-gray-50"></div>
             <div class="flex justify-end space-x-2"><button onclick="hideModal('modal-user')" class="px-4 py-2 bg-gray-300 rounded">Batal</button><button onclick="saveUser()" class="px-4 py-2 bg-blue-600 text-white rounded">Simpan</button></div>
+        </div>
+    </div>
+
+    <!-- Modal Daftar Dashboard -->
+    <div id="modal-dash" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg w-[52rem] max-w-[96vw] max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div class="flex justify-between items-start mb-3"><h3 id="dash-title" class="text-xl font-bold"></h3><button onclick="hideModal('modal-dash')" class="text-gray-500 hover:text-gray-800 text-xl"><i class="fas fa-times"></i></button></div>
+            <div id="dash-body" class="overflow-x-auto"></div>
+        </div>
+    </div>
+
+    <!-- Modal Edit OPL (Admin) -->
+    <div id="modal-opl-edit" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg w-[32rem] max-w-[95vw] max-h-[92vh] overflow-y-auto shadow-2xl">
+            <h3 id="oe-title" class="text-xl font-bold mb-3">Edit OPL</h3>
+            <label class="block text-sm font-bold mb-1">Case</label><input id="oe-case" class="w-full border p-2 rounded mb-2">
+            <label class="block text-sm font-bold mb-1">Nama OPL</label><input id="oe-name" class="w-full border p-2 rounded mb-2">
+            <label class="block text-sm font-bold mb-1">Bagian</label><select id="oe-dept" class="w-full border p-2 rounded mb-2 dept-select"></select>
+            <label class="block text-sm font-bold mb-1">Tipe Lapor</label><select id="oe-type" class="w-full border p-2 rounded mb-2"><option value="Harian">Harian</option><option value="Kasus">Khusus Kasus</option><option value="Info">Tanpa Pelaporan</option></select>
+            <label class="block text-sm font-bold mb-1">Tanggal Expired</label><input type="date" id="oe-expiry" class="w-full border p-2 rounded mb-2">
+            <label class="block text-sm font-bold mb-1">Ganti File OPL <span class="font-normal text-gray-500">(opsional, gambar atau PDF)</span></label><input type="file" id="oe-file" accept="image/*,application/pdf" class="w-full border p-2 rounded mb-4">
+            <div class="flex justify-end space-x-2"><button onclick="hideModal('modal-opl-edit')" class="px-4 py-2 bg-gray-300 rounded">Batal</button><button onclick="saveOplEdit()" class="px-4 py-2 bg-blue-600 text-white rounded">Simpan</button></div>
         </div>
     </div>
 
@@ -531,7 +553,10 @@
         }
         function renderOPLTable() {
             let html = '';
-            const filteredOpls = currentUser.role === 'Admin' || currentUser.dept === 'ALL' ? opls : opls.filter(o => o.dept === currentUser.dept);
+            const visible = currentUser.role === 'Admin' || currentUser.dept === 'ALL' ? opls : opls.filter(o => o.dept === currentUser.dept);
+            const fsel = document.getElementById('opl-filter-dept'), prevF = fsel.value;
+            fsel.innerHTML = '<option value="">Semua bagian</option>' + [...new Set(visible.map(o => o.dept))].sort().map(d => `<option>${esc(d)}</option>`).join(''); fsel.value = prevF;
+            const filteredOpls = visible.filter(o => !fsel.value || o.dept === fsel.value);
             filteredOpls.forEach(opl => {
                 const isExpiring = (new Date(opl.expiryDate) - new Date()) < (14 * 24 * 60 * 60 * 1000);
                 const typeColor = typeCls(opl.reportType);
@@ -545,7 +570,7 @@
                         <td class="p-3"><span class="px-2 py-1 rounded text-xs font-bold ${typeColor}">${typeLabel(opl.reportType)}</span></td>
                         <td class="p-3 text-sm ${isExpiring ? 'text-red-600 font-bold' : ''}">${opl.expiryDate}</td>
                         <td class="p-3"><span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">${opl.status}</span></td>
-                        <td class="p-3">${currentUser.role === 'Admin' ? `<button onclick="reviseOPL('${opl.id}')" class="text-indigo-600 hover:underline text-sm"><i class="fas fa-edit mr-1"></i>Revisi</button>` : '-'}</td>
+                        <td class="p-3">${currentUser.role === 'Admin' ? `<button onclick="openOplEdit('${opl.id}')" class="text-blue-600 hover:underline text-sm mr-3"><i class="fas fa-pen mr-1"></i>Edit</button><button onclick="reviseOPL('${opl.id}')" class="text-indigo-600 hover:underline text-sm"><i class="fas fa-rotate mr-1"></i>Revisi</button>` : '-'}</td>
                     </tr>`;
             });
             document.getElementById('opl-table-body').innerHTML = html;
@@ -1012,7 +1037,7 @@
             const monitored = opls.filter(o => o.reportType !== 'Info');
             const deptSel = document.getElementById('rm-dept'), prevDept = deptSel.value, depts = [...new Set(monitored.map(o => o.dept))].sort();
             deptSel.innerHTML = '<option value="">Semua bagian</option>' + depts.map(d => `<option>${esc(d)}</option>`).join(''); deptSel.value = depts.includes(prevDept) ? prevDept : '';
-            document.getElementById('rm-month-wrap').classList.toggle('hidden', view !== 'week');
+            document.getElementById('rm-month-wrap').classList.toggle('hidden', view === 'month');
             document.getElementById('rm-year-wrap').classList.toggle('hidden', view !== 'month');
             const shownDepts = depts.filter(d => !deptSel.value || d === deptSel.value);
             const list = monitored.filter(o => !deptSel.value || o.dept === deptSel.value).sort((a, b) => a.dept.localeCompare(b.dept) || a.id.localeCompare(b.id));
@@ -1020,6 +1045,7 @@
             body.innerHTML = '<p class="text-gray-500">Memuat data...</p>'; kpi.innerHTML = '';
             let ym, year, from, to, weeks;
             if (view === 'week') { ym = document.getElementById('rm-month').value; weeks = monthWeeks(ym); from = weeks[0].mon; to = weeks[weeks.length - 1].sun; }
+            else if (view === 'day') { ym = document.getElementById('rm-month').value; const [yy, mm] = ym.split('-').map(Number); from = ym + '-01'; to = `${ym}-${pad2(new Date(yy, mm, 0).getDate())}`; }
             else { year = document.getElementById('rm-year').value; from = monthWeeks(year + '-01')[0].mon; const dw = monthWeeks(year + '-12'); to = dw[dw.length - 1].sun; }
             let map; try { map = await loadEntries(from, to); } catch (e) { return body.innerHTML = '<p class="text-red-600">Gagal memuat: ' + esc(e.message) + '</p>'; }
             if (token !== rmToken) return;
@@ -1027,6 +1053,23 @@
             const dayCache = {}; list.forEach(o => dayCache[o.id] = daysOf(o));
             const note = `<p class="text-xs text-gray-500 mb-3">Minggu dihitung Senin-Minggu dan milik bulan dari hari Senin-nya. ☑ = Done, x = Not Done atau hari tanpa laporan (OPL Harian), Interval tidak dihitung. % = ☑ / (☑ + x). Warna: hijau 100%, kuning ≥ ${KPI_MIN}%, merah di bawahnya. OPL Tanpa Pelaporan tidak ditampilkan.</p>`;
             const rowHead = o => `<td class="p-2 text-sm"><b>${esc(o.id)}</b> ${esc(o.name)}</td><td class="p-2 text-sm">${esc(o.dept)}</td><td class="p-2 text-xs">${esc(o.reportType)}</td>`;
+            if (view === 'day') {
+                const n = parseInt(to.slice(8)), sym = { Done: ['☑', 'bg-green-100 text-green-800'], 'Not Done': ['x', 'bg-red-100 text-red-800'], Interval: ['I', 'bg-gray-200 text-gray-600'], Missing: ['x', 'bg-red-50 text-red-400'] };
+                const head = Array.from({ length: n }, (_, i) => { const dow = new Date(`${ym}-${pad2(i + 1)}T00:00:00`).getDay(); return `<th class="p-1 text-center text-xs ${dow === 0 || dow === 6 ? 'bg-gray-300' : ''}">${i + 1}</th>`; }).join('');
+                const rows = list.map(o => {
+                    const ent = map[o.id] || { byDate: {}, cases: [] }; let ok = 0, x = 0, cells = '';
+                    for (let i = 1; i <= n; i++) {
+                        const d = `${ym}-${pad2(i)}`; let st = '';
+                        if (o.reportType === 'Kasus') { if (ent.cases.includes(d)) st = 'Done'; }
+                        else if (d >= o.start && d <= today) st = ent.byDate[d] || (d < today ? 'Missing' : '');
+                        if (st === 'Done') ok++; else if (st === 'Not Done' || st === 'Missing') x++;
+                        const v = sym[st]; cells += `<td class="p-0.5 text-center"><span class="inline-block w-6 rounded text-xs font-bold ${v ? v[1] : 'text-gray-300'}" ${st === 'Missing' ? 'title="Tidak ada laporan (dihitung x)"' : ''}>${v ? v[0] : '·'}</span></td>`;
+                    }
+                    return `<tr class="border-b">${rowHead(o)}${cells}<td class="p-2 text-center text-sm border-l-2">${ok}</td><td class="p-2 text-center text-sm">${x}</td>${pcell(ok, x)}</tr>`;
+                }).join('');
+                body.innerHTML = `<p class="text-xs text-gray-500 mb-3">☑ = Done, x merah = Not Done, x pucat = tidak ada laporan (dihitung x), I = Interval (tidak dihitung), · = belum ada / di luar periode. Hari ini baru dihitung x setelah harinya lewat. Kolom abu-abu = Sabtu dan Minggu.</p><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2">OPL</th><th class="p-2">Bagian</th><th class="p-2">Tipe</th>${head}<th class="p-2 text-center border-l-2">☑</th><th class="p-2 text-center">x</th><th class="p-2 text-center">%</th></tr></thead><tbody>${rows || '<tr><td class="p-3 text-gray-500" colspan="40">Belum ada OPL yang dimonitor.</td></tr>'}</tbody></table>`;
+                return;
+            }
             if (view === 'week') {
                 const head = weeks.map((w, i) => `<th class="p-2 text-center" colspan="3">W${i + 1}<div class="text-xs font-normal">${shortDate(w.mon)}–${shortDate(w.sun)}</div></th>`).join('');
                 const sub = weeks.map(() => '<th class="p-1 text-center text-xs">☑</th><th class="p-1 text-center text-xs">x</th><th class="p-1 text-center text-xs">%</th>').join('');
@@ -1060,6 +1103,45 @@
                 return `<tr class="border-b"><td class="p-2 font-bold">${esc(d)}</td><td class="p-2 text-center">${p === null ? '-' : Math.round(p) + '%'}</td><td class="p-2 text-center">${found.length}</td><td class="p-2 text-center">${repeated ? 'Ya' : '-'}</td><td class="p-2 text-center">${overdue || '-'}</td><td class="p-2 text-center font-bold ${factor === 1 ? 'text-green-700' : factor === 0.5 ? 'text-yellow-700' : 'text-red-700'}">${KPI_BOBOT * factor} / ${KPI_BOBOT}</td><td class="p-2 text-sm">${why}</td></tr>`;
             }).join('');
             el.innerHTML = `<h3 class="font-bold text-lg mb-1">Nilai KPI Pelaporan OPL (bulan terpilih)</h3><p class="text-xs text-gray-500 mb-3">IP 100% = pelaporan konsisten (≥ ${KPI_MIN}%) dan tanpa temuan audit. IP 50% = 1 temuan audit. IP 0% = temuan berulang / lebih dari satu pada OPL yang sama, tindak lanjut melewati batas waktu, atau pelaporan tidak konsisten. Bobot ${KPI_BOBOT}. Batas dan bobot dapat diubah di menu Pengaturan KPI.</p><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2">Bagian</th><th class="p-2 text-center">Pelaporan</th><th class="p-2 text-center">Temuan Audit</th><th class="p-2 text-center">Berulang</th><th class="p-2 text-center">CAPA Terlambat</th><th class="p-2 text-center">Nilai KPI</th><th class="p-2">Keterangan</th></tr></thead><tbody>${rows || '<tr><td class="p-3 text-gray-500" colspan="7">Belum ada data.</td></tr>'}</tbody></table>`;
+        }
+
+        const pad2 = n => String(n).padStart(2, '0');
+
+        // --- DASHBOARD: daftar saat kartu diklik ---
+        function showDashList(kind) {
+            const now = new Date(), soon = 14 * 24 * 60 * 60 * 1000;
+            const oplTable = list => `<table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2">ID</th><th class="p-2">Nama OPL</th><th class="p-2">Bagian</th><th class="p-2">Tipe</th><th class="p-2">Expired</th><th class="p-2"></th></tr></thead><tbody>${list.map(o => { const left = Math.ceil((new Date(o.expiryDate) - now) / 86400000); return `<tr class="border-b"><td class="p-2 font-mono text-sm">${esc(o.id)}</td><td class="p-2 text-sm">${esc(o.name)}</td><td class="p-2 text-sm">${esc(o.dept)}</td><td class="p-2"><span class="px-2 py-1 rounded text-xs font-bold ${typeCls(o.reportType)}">${esc(typeLabel(o.reportType))}</span></td><td class="p-2 text-sm ${left < 14 ? 'text-red-600 font-bold' : ''}">${fmtDate(o.expiryDate)}<div class="text-xs">${left < 0 ? 'sudah lewat ' + (-left) + ' hari' : left + ' hari lagi'}</div></td><td class="p-2"><button onclick="lihatOpl('${esc(o.id)}')" class="bg-blue-600 text-white text-xs px-3 py-1 rounded hover:bg-blue-700">Lihat OPL</button></td></tr>`; }).join('') || '<tr><td class="p-3 text-gray-500" colspan="6">Tidak ada data.</td></tr>'}</tbody></table>`;
+            let title, html;
+            if (kind === 'opl') { title = `Total OPL Aktif (${opls.length})`; html = oplTable(opls); }
+            else if (kind === 'expiring') { const l = opls.filter(o => (new Date(o.expiryDate) - now) < soon).sort((a, b) => a.expiryDate.localeCompare(b.expiryDate)); title = `OPL Akan Expired / Sudah Expired (${l.length})`; html = oplTable(l); }
+            else {
+                const l = capaTickets.filter(t => t.status !== 'CLOSED'); title = `Tiket CAPA Open (${l.length})`;
+                html = `<table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2">No. Berita Acara</th><th class="p-2">OPL</th><th class="p-2">Bagian</th><th class="p-2">Temuan</th><th class="p-2">Status</th></tr></thead><tbody>${l.map(t => { const o = opls.find(x => x.id === t.oplId) || {}; return `<tr class="border-b"><td class="p-2 text-sm font-mono">${esc(t.ba.doc_no || 'CAPA-' + t.id)}</td><td class="p-2 text-sm"><b>${esc(t.oplId)}</b> ${esc(o.name || '')}</td><td class="p-2 text-sm">${esc(t.dept)}</td><td class="p-2 text-sm">${esc(t.finding)}: ${esc(t.keterangan)}</td><td class="p-2 text-xs">${STATUS_LABEL[t.status]}</td></tr>`; }).join('') || '<tr><td class="p-3 text-gray-500" colspan="5">Tidak ada tiket open.</td></tr>'}</tbody></table><div class="mt-4 text-right"><button onclick="hideModal('modal-dash'); showSection('tickets')" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Buka halaman Tiket CAPA</button></div>`;
+            }
+            document.getElementById('dash-title').innerText = title; document.getElementById('dash-body').innerHTML = html; showModal('modal-dash');
+        }
+
+        // --- EDIT OPL (khusus Admin) ---
+        let oplEditId = null;
+        function openOplEdit(id) {
+            if (currentUser.role !== 'Admin') return alert('Hanya Admin yang dapat mengedit OPL.');
+            const o = opls.find(x => x.id === id); if (!o) return; oplEditId = id;
+            document.getElementById('oe-title').innerText = `Edit ${o.id}`;
+            document.getElementById('oe-case').value = o.case; document.getElementById('oe-name').value = o.name; document.getElementById('oe-dept').value = o.dept;
+            document.getElementById('oe-type').value = o.reportType; document.getElementById('oe-expiry').value = o.expiryDate || ''; document.getElementById('oe-file').value = '';
+            showModal('modal-opl-edit');
+        }
+        async function saveOplEdit() {
+            if (currentUser.role !== 'Admin') return alert('Hanya Admin yang dapat mengedit OPL.');
+            const g = id => document.getElementById(id).value.trim();
+            const caseName = g('oe-case'), name = g('oe-name'), dept = g('oe-dept'), type = g('oe-type'), expiry = g('oe-expiry');
+            if (!caseName || !name || !expiry) return alert('Case, Nama OPL, dan Tanggal Expired wajib diisi.');
+            if (!dept || dept === 'ALL') return alert('Pilih satu bagian.');
+            const upd = { case_name: caseName, name, dept, report_type: type, expiry_date: expiry };
+            try { const url = await uploadFile('oe-file', 'opl'); if (url) upd.image_url = url; } catch (e) { return alert('Gagal upload file: ' + (e.message || e)); }
+            const { error } = await sb.from('opls').update(upd).eq('id', oplEditId);
+            if (error) return alert('Gagal menyimpan: ' + error.message);
+            hideModal('modal-opl-edit'); await loadData(); renderOPLTable(); alert('OPL berhasil diperbarui.');
         }
     </script>
 </body>
