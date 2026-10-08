@@ -53,15 +53,6 @@
             <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
                 <button onclick="showSection('dashboard')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-tachometer-alt mr-2"></i> Dashboard</button>
                 
-                <div class="text-gray-500 text-xs uppercase mt-4 mb-2">Master Data</div>
-                <button onclick="showSection('master-dept')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-building mr-2"></i> Departemen</button>
-                <button onclick="showSection('master-user')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-users mr-2"></i> User</button>
-                <button onclick="showSection('opl-master')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-book mr-2"></i> Master OPL</button>
-                
-                <button onclick="showSection('master-temuan')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-list-check mr-2"></i> Master Temuan</button>
-                
-                <button onclick="showSection('master-setting')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-sliders mr-2"></i> Pengaturan KPI</button>
-
                 <div class="text-gray-500 text-xs uppercase mt-4 mb-2">Operasional</div>
                 <button onclick="showSection('opl-saya')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-folder-open mr-2"></i> OPL Saya</button>
                 <button onclick="showSection('reporting')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-paper-plane mr-2"></i> Pelaporan</button>
@@ -72,6 +63,15 @@
                 </button>
                 <button onclick="showSection('rekap-monitoring')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-table-cells mr-2"></i> Rekap Monitoring</button>
                 <button onclick="showSection('recap')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-chart-bar mr-2"></i> Rekapitulasi</button>
+                
+                <div class="text-gray-500 text-xs uppercase mt-4 mb-2">Master Data</div>
+                <button onclick="showSection('master-dept')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-building mr-2"></i> Departemen</button>
+                <button onclick="showSection('master-user')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-users mr-2"></i> User</button>
+                <button onclick="showSection('opl-master')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-book mr-2"></i> Master OPL</button>
+                
+                <button onclick="showSection('master-temuan')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-list-check mr-2"></i> Master Temuan</button>
+                
+                <button onclick="showSection('master-setting')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-sliders mr-2"></i> Pengaturan KPI</button>
             </nav>
             <div class="p-4 border-t border-gray-700">
                 <button onclick="handleLogout()" class="w-full text-left py-2 px-3 rounded hover:bg-red-600 text-red-400"><i class="fas fa-sign-out-alt mr-2"></i> Logout</button>
@@ -92,6 +92,7 @@
                         <div onclick="showDashList('capa')" class="bg-red-600 text-white p-6 rounded-lg shadow cursor-pointer hover:opacity-90" title="Klik untuk melihat daftar"><h3 class="text-lg">Tiket CAPA Open</h3><p class="text-4xl font-bold mt-2" id="stat-capa-tickets">0</p></div>
                     </div>
                     <div class="bg-white p-6 rounded-lg shadow"><h3 class="font-bold text-lg mb-4">Penilaian Bagian Bulan Ini</h3><div id="score-cards" class="grid grid-cols-4 gap-4"></div></div>
+                    <div id="dash-changes" class="bg-white p-6 rounded-lg shadow mt-6"></div>
                 </div>
 
                 <!-- MASTER DEPARTEMEN -->
@@ -109,7 +110,7 @@
                 <div id="sec-master-temuan" class="section hidden fade-in">
                     <h3 class="font-bold text-lg mb-4">Master Kategori Temuan</h3>
                     <div class="bg-white rounded-lg shadow p-6">
-                        <div class="flex gap-2 mb-4"><input id="fc-desc" class="flex-1 border p-2 rounded" placeholder="Uraian temuan baku"><select id="fc-final" class="border p-2 rounded"><option>OK</option><option>Minor</option><option>Mayor</option></select><button onclick="addFindingCat()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Tambah</button></div>
+                        <div class="flex gap-2 mb-4"><input id="fc-desc" class="flex-1 border p-2 rounded" placeholder="Uraian temuan baku"><select id="fc-final" class="border p-2 rounded"><option>OK</option><option>Minor</option><option>Mayor</option></select><button id="fc-btn" onclick="addFindingCat()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Tambah</button></div>
                         <table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-3">Uraian Temuan</th><th class="p-3">Kategori Final</th><th class="p-3">Status</th><th class="p-3">Aksi</th></tr></thead><tbody id="fc-body"></tbody></table>
                     </div>
                 </div>
@@ -136,7 +137,7 @@
                         <button onclick="openUserModal()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"><i class="fas fa-plus mr-2"></i> Tambah User</button>
                     </div>
                     <div class="bg-white rounded-lg shadow p-6 overflow-x-auto">
-                        <table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-3">Username</th><th class="p-3">Email</th><th class="p-3">Role</th><th class="p-3">Departemen</th><th class="p-3">Akses Menu</th><th class="p-3">Aksi</th></tr></thead><tbody id="user-table-body"></tbody></table>
+                        <table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-3">Nama</th><th class="p-3">Jabatan</th><th class="p-3">Email</th><th class="p-3">Role</th><th class="p-3">Departemen</th><th class="p-3">Akses Menu</th><th class="p-3">Aksi</th></tr></thead><tbody id="user-table-body"></tbody></table>
                     </div>
                 </div>
 
@@ -144,7 +145,7 @@
                 <div id="sec-opl-master" class="section hidden fade-in">
                     <div class="flex justify-between mb-4">
                         <div class="flex items-center gap-3"><h3 class="font-bold text-lg">Master Data OPL</h3><select id="opl-filter-dept" onchange="renderOPLTable()" class="keep-read border p-2 rounded text-sm"><option value="">Semua bagian</option></select></div>
-                        <button id="btn-trigger-opl" class="hidden bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" onclick="showModal('modal-opl')"><i class="fas fa-plus mr-2"></i> Input Temuan Awal (Trigger)</button>
+                        <button id="btn-trigger-opl" class="hidden bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" onclick="openOplModal()"><i class="fas fa-plus mr-2"></i> Input Temuan Awal (Trigger)</button>
                     </div>
                     <div class="bg-white rounded-lg shadow overflow-x-auto">
                         <table class="w-full text-left border-collapse">
@@ -209,12 +210,12 @@
                         </div>
                         <div class="grid grid-cols-2 gap-4 mb-4">
                             <div><label class="block text-sm font-bold mb-1">Kategori Final <span class="font-normal text-gray-500">(otomatis dari master temuan)</span></label><select id="audit-finding-select" disabled class="w-full border p-2 rounded bg-gray-100"><option value="OK">OK</option><option value="Minor">Minor</option><option value="Mayor">Mayor</option></select></div>
-                            <div><label class="block text-sm font-bold mb-1">Verifikator</label><input type="text" id="audit-verifikator" class="w-full border p-2 rounded"></div>
+                            <div><label class="block text-sm font-bold mb-1">Verifikator <span class="font-normal text-gray-500">(otomatis dari akun login)</span></label><input type="text" id="audit-verifikator" readonly class="w-full border p-2 rounded bg-gray-100"></div>
                         </div>
                         <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div><label class="block text-sm font-bold mb-1">Jabatan Verifikator</label><input type="text" id="audit-verifier-title" placeholder="MR, HR, Consultant" class="w-full border p-2 rounded"></div>
+                            <div><label class="block text-sm font-bold mb-1">Jabatan Verifikator</label><input type="text" id="audit-verifier-title" readonly class="w-full border p-2 rounded bg-gray-100"></div>
                             <div><label class="block text-sm font-bold mb-1">Tanggal Sosialisasi OPL</label><input type="date" id="audit-sosialisasi" class="w-full border p-2 rounded"></div>
-                            <div><label class="block text-sm font-bold mb-1">Nama PIC / Penanggung Jawab</label><input type="text" id="audit-pic-name" class="w-full border p-2 rounded"></div>
+                            <div><label class="block text-sm font-bold mb-1">Nama PIC / Penanggung Jawab <span class="font-normal text-gray-500">(otomatis dari master user)</span></label><input type="text" id="audit-pic-name" class="w-full border p-2 rounded"></div>
                             <div><label class="block text-sm font-bold mb-1">Jabatan PIC</label><input type="text" id="audit-pic-title" placeholder="Spv Produksi" class="w-full border p-2 rounded"></div>
                         </div>
                         <div class="mb-4"><label class="block text-sm font-bold mb-1">Keterangan Temuan</label><textarea id="audit-keterangan" rows="3" class="w-full border p-2 rounded"></textarea></div>
@@ -287,7 +288,10 @@
         <div class="bg-white p-6 rounded-lg w-[28rem] max-h-[90vh] overflow-y-auto shadow-2xl">
             <h3 id="user-modal-title" class="text-xl font-bold mb-4">Tambah User</h3>
             <input type="email" id="inp-user-email" class="w-full border p-2 rounded mb-2" placeholder="Email (untuk login)">
-            <input type="text" id="inp-user-uname" class="w-full border p-2 rounded mb-2" placeholder="Username / nama tampilan">
+            <input type="text" id="inp-user-uname" class="w-full border p-2 rounded mb-2" placeholder="Username (untuk tampilan singkat)">
+            <input type="text" id="inp-user-fullname" class="w-full border p-2 rounded mb-2" placeholder="Nama lengkap (dipakai di Berita Acara)">
+            <input type="text" id="inp-user-jabatan" class="w-full border p-2 rounded mb-2" placeholder="Jabatan (mis. Spv Produksi, MR)">
+            <label class="flex items-center text-sm mb-2"><input type="checkbox" id="inp-user-pic" class="mr-2"> PIC / penanggung jawab CAPA bagian ini (otomatis terisi di Berita Acara)</label>
             <input type="password" id="inp-user-pass" class="w-full border p-2 rounded mb-2" placeholder="Password (min. 8 karakter)" autocomplete="new-password">
             <select id="inp-user-role" onchange="if(!editingUserId) buildAccessGrid(defaultPerms(this.value))" class="w-full border p-2 rounded mb-2"><option value="User">User (Kepala Bagian)</option><option value="Auditor">Auditor</option><option value="Admin">Admin</option></select>
             <select id="inp-user-dept" class="w-full border p-2 rounded mb-3 dept-select"></select>
@@ -313,9 +317,22 @@
             <label class="block text-sm font-bold mb-1">Nama OPL</label><input id="oe-name" class="w-full border p-2 rounded mb-2">
             <label class="block text-sm font-bold mb-1">Bagian</label><select id="oe-dept" class="w-full border p-2 rounded mb-2 dept-select"></select>
             <label class="block text-sm font-bold mb-1">Tipe Lapor</label><select id="oe-type" class="w-full border p-2 rounded mb-2"><option value="Harian">Harian</option><option value="Kasus">Khusus Kasus</option><option value="Info">Tanpa Pelaporan</option></select>
+            <label class="block text-sm font-bold mb-1">Tanggal OPL Dibuat / Berlaku</label><input type="date" id="oe-created" class="w-full border p-2 rounded mb-2">
             <label class="block text-sm font-bold mb-1">Tanggal Expired</label><input type="date" id="oe-expiry" class="w-full border p-2 rounded mb-2">
             <label class="block text-sm font-bold mb-1">Ganti File OPL <span class="font-normal text-gray-500">(opsional, gambar atau PDF)</span></label><input type="file" id="oe-file" accept="image/*,application/pdf" class="w-full border p-2 rounded mb-4">
             <div class="flex justify-end space-x-2"><button onclick="hideModal('modal-opl-edit')" class="px-4 py-2 bg-gray-300 rounded">Batal</button><button onclick="saveOplEdit()" class="px-4 py-2 bg-blue-600 text-white rounded">Simpan</button></div>
+        </div>
+    </div>
+
+    <!-- Modal Tutup OPL -->
+    <div id="modal-opl-close" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg w-[32rem] max-w-[95vw] shadow-2xl">
+            <h3 id="oc-title" class="text-xl font-bold mb-1">Tutup OPL</h3>
+            <p class="text-sm text-gray-600 mb-3">OPL yang ditutup tidak muncul lagi di Pelaporan dan tidak dihitung di rekap penilaian sejak tanggal penutupan. Isi rujukan dokumen yang menggantikannya.</p>
+            <label class="block text-sm font-bold mb-1">Dirujuk ke IK / SOP <span class="text-red-600">*</span></label><input id="oc-ref" class="w-full border p-2 rounded mb-2" placeholder="Nomor dan judul, mis. IK-PRD-012 Rev 02 - Setting Mesin">
+            <label class="block text-sm font-bold mb-1">Tanggal Penutupan</label><input type="date" id="oc-date" class="w-full border p-2 rounded mb-2">
+            <label class="block text-sm font-bold mb-1">Catatan</label><textarea id="oc-note" rows="2" class="w-full border p-2 rounded mb-4"></textarea>
+            <div class="flex justify-end space-x-2"><button onclick="hideModal('modal-opl-close')" class="px-4 py-2 bg-gray-300 rounded">Batal</button><button onclick="saveOplClose()" class="px-4 py-2 bg-red-600 text-white rounded">Tutup OPL</button></div>
         </div>
     </div>
 
@@ -366,7 +383,8 @@
             </div>
 
             <div class="mb-2">
-                <label class="block text-sm font-bold mb-1">Upload Gambar / PDF OPL (Wajib)</label>
+                <label class="block text-sm font-bold mb-1">Tanggal OPL Dibuat / Berlaku <span class="font-normal text-gray-500">(expired otomatis +6 bulan)</span></label><input type="date" id="trigger-date" class="w-full border p-2 rounded mb-3">
+                    <label class="block text-sm font-bold mb-1">Upload Gambar / PDF OPL (Wajib)</label>
                 <input type="file" id="trigger-img" accept="image/*,application/pdf" class="w-full border p-2 rounded">
             </div>
             <div class="flex justify-end space-x-2 mt-4"><button onclick="hideModal('modal-opl')" class="px-4 py-2 bg-gray-300 rounded">Batal</button><button onclick="createNewOPL()" class="px-4 py-2 bg-blue-600 text-white rounded">Buat OPL</button></div>
@@ -409,11 +427,11 @@
             const [d, o, u] = await Promise.all([
                 sb.from('departments').select('name').order('name'),
                 sb.from('opls').select('*').order('id'),
-                sb.from('profiles').select('id, email, username, role, dept, permissions').order('username')
+                sb.from('profiles').select('id, email, username, full_name, jabatan, is_pic, role, dept, permissions').order('username')
             ]);
             if (d.error || o.error) throw new Error((d.error || o.error).message);
             departments = d.data.map(x => x.name);
-            opls = o.data.map(x => ({ id: x.id, case: x.case_name, name: x.name, dept: x.dept, reportType: x.report_type, start: localDate(x.created_at),
+            opls = o.data.map(x => ({ id: x.id, case: x.case_name, name: x.name, dept: x.dept, reportType: x.report_type, start: localDate(x.created_at), revision: x.revision_no || 0, closedDate: x.closed_at, closedRef: x.closed_ref, closedNote: x.closed_note,
                 creationDate: x.creation_date, expiryDate: x.expiry_date, status: x.status, image: x.image_url }));
             users = u.data || [];
             const [au, tk, fc] = await Promise.all([
@@ -429,13 +447,15 @@
             if (rc.error || ur.error) throw new Error((rc.error || ur.error).message);
             recurrences = rc.data.map(r => ({ id: r.id, oplId: r.opl_id, date: r.occurred_on, dept: r.occurred_dept, desc: r.description, image: r.image_url }));
             updateReqs = ur.data.map(r => ({ id: r.id, recId: r.recurrence_id, oplId: r.opl_id, dept: r.dept, status: r.status, resp: r.response, target: r.target_date }));
+            const hs = await sb.from('opl_history').select('*').order('changed_at', { ascending: false }).limit(100);
+            oplHistory = hs.error ? [] : hs.data.map(h => ({ id: h.id, oplId: h.opl_id, action: h.action, detail: h.detail, by: h.changed_by, at: h.changed_at }));
             const st = await sb.from('app_settings').select('*');
             if (!st.error) st.data.forEach(r => { if (r.key === 'kpi_min_consistent') KPI_MIN = Number(r.value); if (r.key === 'kpi_bobot') KPI_BOBOT = Number(r.value); });
             computeScores(); updateTicketBadge();
         }
 
         async function enterApp(session) {
-            const { data: prof, error } = await sb.from('profiles').select('username, role, dept, permissions').eq('id', session.user.id).single();
+            const { data: prof, error } = await sb.from('profiles').select('username, full_name, jabatan, role, dept, permissions').eq('id', session.user.id).single();
             if (error || !prof) { await sb.auth.signOut(); return showLoginError('Akun belum terdaftar di sistem. Hubungi Admin.'); }
             currentUser = prof; currentUser.id = session.user.id;
             try { await loadData(); } catch (e) { await sb.auth.signOut(); return showLoginError('Gagal memuat data: ' + e.message); }
@@ -540,15 +560,15 @@
             if (dept === 'ALL') return alert('Pilih satu departemen untuk OPL ini.');
             let image; try { image = await uploadFile('trigger-img', 'opl'); } catch (e) { return alert('Gagal upload file: ' + (e.message || e)); } if (!image) return alert('Upload Gambar atau PDF OPL wajib dilakukan!');
             const nums = opls.map(o => parseInt(o.id.replace(/\D/g, '')) || 0), id = 'OPL' + String(Math.max(0, ...nums) + 1).padStart(3, '0');
-            const exp = new Date(); exp.setMonth(exp.getMonth() + 6);
-            const { error } = await sb.from('opls').insert({ id, case_name: caseName, name: oplName, dept, report_type: reportType, creation_date: new Date().toISOString().slice(0, 10), expiry_date: exp.toISOString().slice(0, 10), status: 'OPEN', image_url: image });
+            const created = document.getElementById('trigger-date').value || localDate(new Date()); const exp = new Date(created + 'T00:00:00'); exp.setMonth(exp.getMonth() + 6);
+            const { error } = await sb.from('opls').insert({ id, case_name: caseName, name: oplName, dept, report_type: reportType, creation_date: created, expiry_date: localDate(exp), status: 'OPEN', image_url: image });
             if (error) return alert('Gagal menyimpan OPL: ' + error.message);
             hideModal('modal-opl'); await loadData(); renderOPLTable(); alert('OPL ' + id + ' berhasil dibuat!');
         }
         async function reviseOPL(oplId) {
             if (!confirm('Revisi OPL? Umur akan update 6 bulan dari hari ini.')) return;
             const exp = new Date(); exp.setMonth(exp.getMonth() + 6);
-            const { error } = await sb.from('opls').update({ creation_date: new Date().toISOString().slice(0, 10), expiry_date: exp.toISOString().slice(0, 10), status: 'REVISED' }).eq('id', oplId);
+            const { error } = await sb.from('opls').update({ creation_date: new Date().toISOString().slice(0, 10), expiry_date: exp.toISOString().slice(0, 10), status: 'REVISED', revision_no: ((opls.find(o => o.id === oplId) || {}).revision || 0) + 1 }).eq('id', oplId);
             if (error) return alert('Gagal: ' + error.message); await loadData(); renderOPLTable();
         }
         function renderOPLTable() {
@@ -569,8 +589,8 @@
                         <td class="p-3 text-sm">${opl.dept}</td>
                         <td class="p-3"><span class="px-2 py-1 rounded text-xs font-bold ${typeColor}">${typeLabel(opl.reportType)}</span></td>
                         <td class="p-3 text-sm ${isExpiring ? 'text-red-600 font-bold' : ''}">${opl.expiryDate}</td>
-                        <td class="p-3"><span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">${opl.status}</span></td>
-                        <td class="p-3">${currentUser.role === 'Admin' ? `<button onclick="openOplEdit('${opl.id}')" class="text-blue-600 hover:underline text-sm mr-3"><i class="fas fa-pen mr-1"></i>Edit</button><button onclick="reviseOPL('${opl.id}')" class="text-indigo-600 hover:underline text-sm"><i class="fas fa-rotate mr-1"></i>Revisi</button>` : '-'}</td>
+                        <td class="p-3">${statusCell(opl)}</td>
+                        <td class="p-3">${oplActions(opl)}</td>
                     </tr>`;
             });
             document.getElementById('opl-table-body').innerHTML = html;
@@ -586,7 +606,7 @@
         }
 
         function renderReporting() {
-            const myOpls = currentUser.dept === 'ALL' ? opls : opls.filter(o => o.dept === currentUser.dept);
+            const myOpls = (currentUser.dept === 'ALL' ? opls : opls.filter(o => o.dept === currentUser.dept)).filter(o => o.status !== 'CLOSED');
             
             // Pecah OPL berdasarkan Tipe Laporan
             const harianOpls = myOpls.filter(o => o.reportType === 'Harian');
@@ -635,7 +655,7 @@
             repExisting = {}; if (currentUser.role === 'Admin') loadReportDate();
         };
         async function saveDailyReport() {
-            const myOpls = currentUser.dept === 'ALL' ? opls : opls.filter(o => o.dept === currentUser.dept);
+            const myOpls = (currentUser.dept === 'ALL' ? opls : opls.filter(o => o.dept === currentUser.dept)).filter(o => o.status !== 'CLOSED');
             const harianOpls = myOpls.filter(o => o.reportType === 'Harian');
             const today = localDate(new Date()), dateEl = document.getElementById('rep-date');
             const date = currentUser.role === 'Admin' && dateEl && dateEl.value ? dateEl.value : today, isPast = date < today;
@@ -681,7 +701,7 @@
             if (c) document.getElementById('audit-keterangan').value = c.description;
         }
         function renderAuditSection() {
-            document.getElementById('audit-opl-select').innerHTML = '<option value="">-- Pilih OPL --</option>' + opls.map(o => `<option value="${esc(o.id)}">${esc(o.id)} - ${esc(o.name)} (${esc(o.dept)})</option>`).join('');
+            document.getElementById('audit-opl-select').innerHTML = '<option value="">-- Pilih OPL --</option>' + opls.filter(o => o.status !== 'CLOSED').map(o => `<option value="${esc(o.id)}">${esc(o.id)} - ${esc(o.name)} (${esc(o.dept)})</option>`).join('');
             document.getElementById('audit-opl-select').onchange = e => { const o = opls.find(x => x.id === e.target.value); if (o) document.getElementById('audit-dept-select').value = o.dept; };
             document.getElementById('audit-kategori-baku').innerHTML = '<option value="">-- Pilih --</option>' + findingCats.filter(c => c.is_active).map(c => `<option value="${c.id}">${esc(c.final_category)} - ${esc(c.description)}</option>`).join('');
             document.getElementById('audit-history').innerHTML = audits.slice().reverse().map(a => {
@@ -795,14 +815,14 @@
                 const exp = o.expiryDate && (new Date(o.expiryDate) - new Date()) < 14 * 86400000;
                 return `<div class="bg-white p-4 rounded-lg shadow border-l-4 ${o.reportType === 'Harian' ? 'border-green-500' : o.reportType === 'Info' ? 'border-gray-400' : 'border-purple-500'}">
                     <div class="flex justify-between items-start"><div><p class="font-mono text-xs text-gray-500">${esc(o.id)} · ${esc(o.dept)}</p><h4 class="font-bold text-blue-800">${esc(o.name)}</h4><p class="text-sm text-gray-600">${esc(o.case)}</p></div><span class="text-xs px-2 py-1 rounded font-bold ${typeCls(o.reportType)}">${esc(typeLabel(o.reportType))}</span></div>
-                    <div class="flex justify-between items-center mt-3"><span class="text-xs ${exp ? 'text-red-600 font-bold' : 'text-gray-500'}">Berlaku s/d ${esc(o.expiryDate || '-')}</span><button onclick="lihatOpl('${esc(o.id)}')" class="keep-read bg-blue-600 text-white text-sm px-3 py-1 rounded hover:bg-blue-700"><i class="fas fa-eye mr-1"></i> Lihat OPL</button></div></div>`;
+                    <div class="flex justify-between items-center mt-3"><span class="text-xs ${exp ? 'text-red-600 font-bold' : 'text-gray-500'}">${o.status === 'CLOSED' ? 'Ditutup. Rujuk: ' + esc(o.closedRef || '-') : 'Berlaku s/d ' + esc(o.expiryDate || '-')}</span><button onclick="lihatOpl('${esc(o.id)}')" class="keep-read bg-blue-600 text-white text-sm px-3 py-1 rounded hover:bg-blue-700"><i class="fas fa-eye mr-1"></i> Lihat OPL</button></div></div>`;
             }).join('') || '<p class="text-gray-500 italic">Belum ada OPL untuk bagian Anda.</p>';
         }
         function lihatOpl(id) {
             const o = opls.find(x => x.id === id); if (!o) return;
             document.getElementById('opl-view-title').innerText = `${o.id} - ${o.name}`;
             document.getElementById('opl-view-body').innerHTML = `
-                <div class="grid grid-cols-2 gap-2 text-sm mb-3"><p><b>Case:</b> ${esc(o.case)}</p><p><b>Bagian:</b> ${esc(o.dept)}</p><p><b>Tipe laporan:</b> ${esc(typeLabel(o.reportType))}</p><p><b>Status:</b> ${esc(o.status)}</p><p><b>Dibuat:</b> ${esc(o.creationDate)}</p><p><b>Berlaku s/d:</b> ${esc(o.expiryDate || '-')}</p></div>
+                <div class="grid grid-cols-2 gap-2 text-sm mb-3"><p><b>Case:</b> ${esc(o.case)}</p><p><b>Bagian:</b> ${esc(o.dept)}</p><p><b>Tipe laporan:</b> ${esc(typeLabel(o.reportType))}</p><p><b>Status:</b> ${esc(o.status)}${o.status === 'CLOSED' ? ' (rujuk: ' + esc(o.closedRef || '-') + ')' : (o.revision ? ' (rev ' + o.revision + ')' : '')}</p><p><b>Dibuat:</b> ${esc(o.creationDate)}</p><p><b>Berlaku s/d:</b> ${esc(o.expiryDate || '-')}</p></div>
                 ${fileViewHtml(o.image)}${oplHistoryHtml(o.id)}`;
             showModal('modal-opl-view');
         }
@@ -875,7 +895,7 @@
             return `<div class="mt-4 border-t pt-3"><h4 class="font-bold text-sm mb-2">Riwayat Kejadian Berulang: ${h.length}x</h4>${h.length ? h.map(r => `<p class="text-sm py-1 border-b">${fmtDate(r.date)} · ${esc(r.dept || '-')} - ${esc(r.desc)}</p>`).join('') : '<p class="text-sm text-gray-500">Belum ada kejadian berulang.</p>'}</div>`;
         }
         function renderRecurrence() {
-            document.getElementById('rec-opl').innerHTML = '<option value="">-- Pilih OPL --</option>' + opls.map(o => `<option value="${esc(o.id)}">${esc(o.id)} - ${esc(o.name)} (${esc(o.dept)})</option>`).join('');
+            document.getElementById('rec-opl').innerHTML = '<option value="">-- Pilih OPL --</option>' + opls.filter(o => o.status !== 'CLOSED').map(o => `<option value="${esc(o.id)}">${esc(o.id)} - ${esc(o.name)} (${esc(o.dept)})</option>`).join('');
             if (!document.getElementById('rec-date').value) document.getElementById('rec-date').value = new Date().toISOString().slice(0, 10);
             document.getElementById('rec-body').innerHTML = recurrences.map(r => { const o = opls.find(x => x.id === r.oplId) || {};
                 return `<tr class="border-b"><td class="p-3 text-sm">${fmtDate(r.date)}</td><td class="p-3 text-sm"><b>${esc(r.oplId)}</b> ${esc(o.name || '')}</td><td class="p-3 text-sm">${esc(r.dept || '-')}</td><td class="p-3 text-sm">${esc(r.desc)}</td><td class="p-3">${r.image ? `<img src="${esc(r.image)}" class="thumb" onclick="previewImage(this.src)">` : '-'}</td></tr>`; }).join('') || '<tr><td class="p-3 text-gray-500" colspan="5">Belum ada kejadian berulang.</td></tr>';
@@ -927,7 +947,7 @@
             if (error) return alert('Gagal: ' + error.message);
             if (perm('opl-master') === 'input' && confirm('Sekaligus tandai OPL ' + u.oplId + ' sebagai REVISI (masa berlaku 6 bulan dari hari ini)?')) {
                 const exp = new Date(); exp.setMonth(exp.getMonth() + 6);
-                await sb.from('opls').update({ creation_date: new Date().toISOString().slice(0, 10), expiry_date: exp.toISOString().slice(0, 10), status: 'REVISED' }).eq('id', u.oplId);
+                await sb.from('opls').update({ creation_date: new Date().toISOString().slice(0, 10), expiry_date: exp.toISOString().slice(0, 10), status: 'REVISED', revision_no: ((opls.find(o => o.id === u.oplId) || {}).revision || 0) + 1 }).eq('id', u.oplId);
             }
             await loadData(); renderTickets();
         }
@@ -1017,8 +1037,8 @@
         // Daftar hari yang dihitung: Done = ☑, Not Done = x, Interval = dilewati, hari tanpa laporan = x (OPL Harian)
         function daysFor(o, ent, from, to, today) {
             const out = []; ent = ent || { byDate: {}, cases: [] };
-            if (o.reportType === 'Kasus') { ent.cases.filter(d => d >= from && d <= to).forEach(d => out.push({ date: d, ok: true })); return out; }
-            const start = o.start > from ? o.start : from, end = to < today ? to : today;
+            if (o.reportType === 'Kasus') { ent.cases.filter(d => d >= from && d <= to && !(o.closedDate && d >= o.closedDate)).forEach(d => out.push({ date: d, ok: true })); return out; }
+            const start = o.start > from ? o.start : from; let end = to < today ? to : today; if (o.closedDate && addDays(o.closedDate, -1) < end) end = addDays(o.closedDate, -1);
             for (let d = start; d <= end; d = addDays(d, 1)) {
                 const st = ent.byDate[d];
                 if (st === 'Interval') continue;
@@ -1040,18 +1060,19 @@
             document.getElementById('rm-month-wrap').classList.toggle('hidden', view === 'month');
             document.getElementById('rm-year-wrap').classList.toggle('hidden', view !== 'month');
             const shownDepts = depts.filter(d => !deptSel.value || d === deptSel.value);
-            const list = monitored.filter(o => !deptSel.value || o.dept === deptSel.value).sort((a, b) => a.dept.localeCompare(b.dept) || a.id.localeCompare(b.id));
+            let list = monitored.filter(o => !deptSel.value || o.dept === deptSel.value).sort((a, b) => a.dept.localeCompare(b.dept) || a.id.localeCompare(b.id));
             const body = document.getElementById('rm-body'), kpi = document.getElementById('rm-kpi');
             body.innerHTML = '<p class="text-gray-500">Memuat data...</p>'; kpi.innerHTML = '';
             let ym, year, from, to, weeks;
             if (view === 'week') { ym = document.getElementById('rm-month').value; weeks = monthWeeks(ym); from = weeks[0].mon; to = weeks[weeks.length - 1].sun; }
             else if (view === 'day') { ym = document.getElementById('rm-month').value; const [yy, mm] = ym.split('-').map(Number); from = ym + '-01'; to = `${ym}-${pad2(new Date(yy, mm, 0).getDate())}`; }
             else { year = document.getElementById('rm-year').value; from = monthWeeks(year + '-01')[0].mon; const dw = monthWeeks(year + '-12'); to = dw[dw.length - 1].sun; }
+            list = list.filter(o => !(o.closedDate && o.closedDate <= from));
             let map; try { map = await loadEntries(from, to); } catch (e) { return body.innerHTML = '<p class="text-red-600">Gagal memuat: ' + esc(e.message) + '</p>'; }
             if (token !== rmToken) return;
             const daysOf = o => daysFor(o, map[o.id], from, to, today);
             const dayCache = {}; list.forEach(o => dayCache[o.id] = daysOf(o));
-            const note = `<p class="text-xs text-gray-500 mb-3">Minggu dihitung Senin-Minggu dan milik bulan dari hari Senin-nya. ☑ = Done, x = Not Done atau hari tanpa laporan (OPL Harian), Interval tidak dihitung. % = ☑ / (☑ + x). Warna: hijau 100%, kuning ≥ ${KPI_MIN}%, merah di bawahnya. OPL Tanpa Pelaporan tidak ditampilkan.</p>`;
+            const note = `<p class="text-xs text-gray-500 mb-3">Minggu dihitung Senin-Minggu dan milik bulan dari hari Senin-nya. ☑ = Done, x = Not Done atau hari tanpa laporan (OPL Harian), Interval tidak dihitung. % = ☑ / (☑ + x). Warna: hijau 100%, kuning ≥ ${KPI_MIN}%, merah di bawahnya. OPL Tanpa Pelaporan tidak ditampilkan. OPL yang ditutup tidak dihitung sejak tanggal penutupan.</p>`;
             const rowHead = o => `<td class="p-2 text-sm"><b>${esc(o.id)}</b> ${esc(o.name)}</td><td class="p-2 text-sm">${esc(o.dept)}</td><td class="p-2 text-xs">${esc(o.reportType)}</td>`;
             if (view === 'day') {
                 const n = parseInt(to.slice(8)), sym = { Done: ['☑', 'bg-green-100 text-green-800'], 'Not Done': ['x', 'bg-red-100 text-red-800'], Interval: ['I', 'bg-gray-200 text-gray-600'], Missing: ['x', 'bg-red-50 text-red-400'] };
@@ -1061,7 +1082,7 @@
                     for (let i = 1; i <= n; i++) {
                         const d = `${ym}-${pad2(i)}`; let st = '';
                         if (o.reportType === 'Kasus') { if (ent.cases.includes(d)) st = 'Done'; }
-                        else if (d >= o.start && d <= today) st = ent.byDate[d] || (d < today ? 'Missing' : '');
+                        else if (d >= o.start && d <= today && !(o.closedDate && d >= o.closedDate)) st = ent.byDate[d] || (d < today ? 'Missing' : '');
                         if (st === 'Done') ok++; else if (st === 'Not Done' || st === 'Missing') x++;
                         const v = sym[st]; cells += `<td class="p-0.5 text-center"><span class="inline-block w-6 rounded text-xs font-bold ${v ? v[1] : 'text-gray-300'}" ${st === 'Missing' ? 'title="Tidak ada laporan (dihitung x)"' : ''}>${v ? v[0] : '·'}</span></td>`;
                     }
@@ -1112,8 +1133,8 @@
             const now = new Date(), soon = 14 * 24 * 60 * 60 * 1000;
             const oplTable = list => `<table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2">ID</th><th class="p-2">Nama OPL</th><th class="p-2">Bagian</th><th class="p-2">Tipe</th><th class="p-2">Expired</th><th class="p-2"></th></tr></thead><tbody>${list.map(o => { const left = Math.ceil((new Date(o.expiryDate) - now) / 86400000); return `<tr class="border-b"><td class="p-2 font-mono text-sm">${esc(o.id)}</td><td class="p-2 text-sm">${esc(o.name)}</td><td class="p-2 text-sm">${esc(o.dept)}</td><td class="p-2"><span class="px-2 py-1 rounded text-xs font-bold ${typeCls(o.reportType)}">${esc(typeLabel(o.reportType))}</span></td><td class="p-2 text-sm ${left < 14 ? 'text-red-600 font-bold' : ''}">${fmtDate(o.expiryDate)}<div class="text-xs">${left < 0 ? 'sudah lewat ' + (-left) + ' hari' : left + ' hari lagi'}</div></td><td class="p-2"><button onclick="lihatOpl('${esc(o.id)}')" class="bg-blue-600 text-white text-xs px-3 py-1 rounded hover:bg-blue-700">Lihat OPL</button></td></tr>`; }).join('') || '<tr><td class="p-3 text-gray-500" colspan="6">Tidak ada data.</td></tr>'}</tbody></table>`;
             let title, html;
-            if (kind === 'opl') { title = `Total OPL Aktif (${opls.length})`; html = oplTable(opls); }
-            else if (kind === 'expiring') { const l = opls.filter(o => (new Date(o.expiryDate) - now) < soon).sort((a, b) => a.expiryDate.localeCompare(b.expiryDate)); title = `OPL Akan Expired / Sudah Expired (${l.length})`; html = oplTable(l); }
+            if (kind === 'opl') { const act = opls.filter(o => o.status !== 'CLOSED'); title = `Total OPL Aktif (${act.length})`; html = oplTable(act); }
+            else if (kind === 'expiring') { const l = opls.filter(o => o.status !== 'CLOSED' && (new Date(o.expiryDate) - now) < soon).sort((a, b) => a.expiryDate.localeCompare(b.expiryDate)); title = `OPL Akan Expired / Sudah Expired (${l.length})`; html = oplTable(l); }
             else {
                 const l = capaTickets.filter(t => t.status !== 'CLOSED'); title = `Tiket CAPA Open (${l.length})`;
                 html = `<table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2">No. Berita Acara</th><th class="p-2">OPL</th><th class="p-2">Bagian</th><th class="p-2">Temuan</th><th class="p-2">Status</th></tr></thead><tbody>${l.map(t => { const o = opls.find(x => x.id === t.oplId) || {}; return `<tr class="border-b"><td class="p-2 text-sm font-mono">${esc(t.ba.doc_no || 'CAPA-' + t.id)}</td><td class="p-2 text-sm"><b>${esc(t.oplId)}</b> ${esc(o.name || '')}</td><td class="p-2 text-sm">${esc(t.dept)}</td><td class="p-2 text-sm">${esc(t.finding)}: ${esc(t.keterangan)}</td><td class="p-2 text-xs">${STATUS_LABEL[t.status]}</td></tr>`; }).join('') || '<tr><td class="p-3 text-gray-500" colspan="5">Tidak ada tiket open.</td></tr>'}</tbody></table><div class="mt-4 text-right"><button onclick="hideModal('modal-dash'); showSection('tickets')" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Buka halaman Tiket CAPA</button></div>`;
@@ -1143,6 +1164,158 @@
             if (error) return alert('Gagal menyimpan: ' + error.message);
             hideModal('modal-opl-edit'); await loadData(); renderOPLTable(); alert('OPL berhasil diperbarui.');
         }
+
+        // ---------- Perubahan terbaru: OPL ----------
+        let oplHistory = [];
+        function openOplModal() { if (!document.getElementById('trigger-date').value) document.getElementById('trigger-date').value = localDate(new Date()); showModal('modal-opl'); }
+        function statusCell(o) {
+            if (o.status === 'CLOSED') return `<span class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded font-bold">DITUTUP</span><div class="text-xs text-gray-500 mt-1">${esc(o.closedRef || '')}</div>`;
+            if (o.status === 'REVISED') return `<span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded">REVISED${o.revision ? ' (rev ' + o.revision + ')' : ''}</span>`;
+            return `<span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">${esc(o.status)}</span>`;
+        }
+        function oplActions(o) {
+            if (currentUser.role !== 'Admin') return '-';
+            const expired = new Date(o.expiryDate) < new Date();
+            let h = `<button onclick="openOplEdit('${o.id}')" class="text-blue-600 hover:underline text-sm mr-3"><i class="fas fa-pen mr-1"></i>Edit</button>`;
+            if (o.status !== 'CLOSED') h += `<button onclick="reviseOPL('${o.id}')" class="text-indigo-600 hover:underline text-sm mr-3"><i class="fas fa-rotate mr-1"></i>Revisi</button><button onclick="openOplClose('${o.id}')" class="${expired ? 'text-red-600 font-bold' : 'text-gray-500'} hover:underline text-sm"><i class="fas fa-lock mr-1"></i>Tutup</button>`;
+            return h;
+        }
+        let oplCloseId = null;
+        function openOplClose(id) {
+            if (currentUser.role !== 'Admin') return alert('Hanya Admin yang dapat menutup OPL.');
+            const o = opls.find(x => x.id === id); oplCloseId = id;
+            document.getElementById('oc-title').innerText = `Tutup ${o.id} - ${o.name}`;
+            document.getElementById('oc-ref').value = ''; document.getElementById('oc-note').value = ''; document.getElementById('oc-date').value = localDate(new Date());
+            showModal('modal-opl-close');
+        }
+        async function saveOplClose() {
+            const ref = document.getElementById('oc-ref').value.trim(), date = document.getElementById('oc-date').value, note = document.getElementById('oc-note').value.trim();
+            if (!ref) return alert('Rujukan IK / SOP wajib diisi.'); if (!date) return alert('Tanggal penutupan wajib diisi.');
+            const { error } = await sb.from('opls').update({ status: 'CLOSED', closed_at: date, closed_ref: ref, closed_note: note || null }).eq('id', oplCloseId);
+            if (error) return alert('Gagal menutup OPL: ' + error.message);
+            hideModal('modal-opl-close'); await loadData(); renderOPLTable(); alert('OPL ditutup.');
+        }
+        function renderChanges() {
+            const el = document.getElementById('dash-changes'); if (!el) return;
+            const cls = { Revisi: 'bg-indigo-100 text-indigo-800', Ditutup: 'bg-gray-200 text-gray-700', 'Pindah bagian': 'bg-orange-100 text-orange-800', 'Perubahan data': 'bg-blue-100 text-blue-800' };
+            const rows = oplHistory.map(h => { const o = opls.find(x => x.id === h.oplId) || {}, u = users.find(x => x.id === h.by);
+                return `<tr class="border-b"><td class="p-2 text-sm whitespace-nowrap">${fmtDate(localDate(h.at))}</td><td class="p-2 text-sm"><b>${esc(h.oplId)}</b> ${esc(o.name || '')}<div class="text-xs text-gray-500">${esc(o.dept || '')}</div></td><td class="p-2"><span class="px-2 py-1 rounded text-xs font-bold ${cls[h.action] || cls['Perubahan data']}">${esc(h.action)}</span></td><td class="p-2 text-xs text-gray-700">${esc(h.detail || '')}</td><td class="p-2 text-xs">${esc(u ? (u.full_name || u.username) : '-')}</td></tr>`; }).join('');
+            el.innerHTML = `<h3 class="font-bold text-lg mb-1">Perubahan & Revisi OPL</h3><p class="text-xs text-gray-500 mb-3">Revisi, perubahan data, pindah bagian, dan penutupan OPL (100 catatan terbaru).</p><div class="overflow-y-auto" style="max-height:18rem"><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2">Tanggal</th><th class="p-2">OPL</th><th class="p-2">Jenis</th><th class="p-2">Detail</th><th class="p-2">Oleh</th></tr></thead><tbody>${rows || '<tr><td class="p-3 text-gray-500" colspan="5">Belum ada revisi atau perubahan OPL.</td></tr>'}</tbody></table></div>`;
+        }
+        const _renderDashboard = renderDashboard;
+        renderDashboard = function () {
+            _renderDashboard();
+            const act = opls.filter(o => o.status !== 'CLOSED');
+            document.getElementById('stat-active-opl').innerText = act.length;
+            document.getElementById('stat-expiring-opl').innerText = act.filter(o => (new Date(o.expiryDate) - new Date()) < 14 * 86400000).length;
+            renderChanges();
+        };
+
+        // ---------- Edit OPL (Admin) dengan pemindahan bagian ----------
+        function openOplEdit(id) {
+            if (currentUser.role !== 'Admin') return alert('Hanya Admin yang dapat mengedit OPL.');
+            const o = opls.find(x => x.id === id); if (!o) return; oplEditId = id;
+            document.getElementById('oe-title').innerText = `Edit ${o.id}`;
+            document.getElementById('oe-case').value = o.case; document.getElementById('oe-name').value = o.name; document.getElementById('oe-dept').value = o.dept;
+            document.getElementById('oe-type').value = o.reportType; document.getElementById('oe-created').value = o.creationDate || ''; document.getElementById('oe-expiry').value = o.expiryDate || ''; document.getElementById('oe-file').value = '';
+            showModal('modal-opl-edit');
+        }
+        async function saveOplEdit() {
+            if (currentUser.role !== 'Admin') return alert('Hanya Admin yang dapat mengedit OPL.');
+            const g = id => document.getElementById(id).value.trim(), o = opls.find(x => x.id === oplEditId);
+            const caseName = g('oe-case'), name = g('oe-name'), dept = g('oe-dept'), type = g('oe-type'), created = g('oe-created'), expiry = g('oe-expiry');
+            if (!caseName || !name || !created || !expiry) return alert('Case, Nama OPL, Tanggal Dibuat, dan Tanggal Expired wajib diisi.');
+            if (!dept || dept === 'ALL') return alert('Pilih satu bagian.');
+            const upd = { case_name: caseName, name, report_type: type, creation_date: created, expiry_date: expiry };
+            try { const url = await uploadFile('oe-file', 'opl'); if (url) upd.image_url = url; } catch (e) { return alert('Gagal upload file: ' + (e.message || e)); }
+            if (dept !== o.dept) {
+                const na = audits.filter(a => a.oplId === o.id).length, nt = capaTickets.filter(t => t.oplId === o.id).length;
+                if (!confirm(`Memindahkan ${o.id} dari ${o.dept} ke ${dept}.\nSebanyak ${na} audit dan ${nt} tiket CAPA milik OPL ini ikut dipindah ke ${dept}. Laporan harian otomatis mengikuti. Lanjutkan?`)) return;
+                const r = await sb.rpc('change_opl_dept', { p_opl: o.id, p_dept: dept }); if (r.error) return alert('Gagal memindahkan bagian: ' + r.error.message);
+            }
+            const { error } = await sb.from('opls').update(upd).eq('id', oplEditId);
+            if (error) return alert('Gagal menyimpan: ' + error.message);
+            hideModal('modal-opl-edit'); await loadData(); renderOPLTable(); alert('OPL berhasil diperbarui.');
+        }
+
+        // ---------- Master Departemen (edit nama) ----------
+        function renderDeptTable() {
+            document.getElementById('dept-table-body').innerHTML = departments.map((d, i) => `<tr class="border-b"><td class="p-3">${i + 1}</td><td class="p-3 font-bold">${esc(d)}</td><td class="p-3"><button onclick="editDept('${esc(d)}')" class="text-blue-600 hover:underline mr-3"><i class="fas fa-pen"></i></button><button onclick="deleteDept('${esc(d)}')" class="text-red-500 hover:underline"><i class="fas fa-trash"></i></button></td></tr>`).join('');
+        }
+        async function editDept(name) {
+            const input = prompt('Ubah nama bagian:', name); if (input === null) return;
+            const nn = input.trim().toUpperCase(); if (!nn || nn === name) return; if (departments.includes(nn)) return alert('Nama sudah dipakai.');
+            if (!confirm(`Ubah ${name} menjadi ${nn}? Semua OPL, audit, tiket, dan user di bagian ini ikut berubah.`)) return;
+            const { error } = await sb.rpc('rename_department', { p_old: name, p_new: nn }); if (error) return alert('Gagal: ' + error.message);
+            await loadData(); refreshDeptDropdowns(); renderDeptTable();
+        }
+
+        // ---------- Master Temuan (edit) ----------
+        let fcEditId = null;
+        function renderFindingCats() {
+            document.getElementById('fc-body').innerHTML = findingCats.map(c => `<tr class="border-b"><td class="p-3 text-sm">${esc(c.description)}</td><td class="p-3 font-bold">${esc(c.final_category)}</td><td class="p-3 text-sm">${c.is_active ? 'Aktif' : 'Nonaktif'}</td><td class="p-3"><button onclick="editFindingCat(${c.id})" class="text-blue-600 hover:underline text-sm mr-3">Edit</button><button onclick="toggleFindingCat(${c.id})" class="text-indigo-600 hover:underline text-sm">${c.is_active ? 'Nonaktifkan' : 'Aktifkan'}</button></td></tr>`).join('');
+        }
+        function editFindingCat(id) { const c = findingCats.find(x => x.id === id); fcEditId = id; document.getElementById('fc-desc').value = c.description; document.getElementById('fc-final').value = c.final_category; document.getElementById('fc-btn').innerText = 'Simpan Perubahan'; document.getElementById('fc-desc').focus(); }
+        async function addFindingCat() {
+            const description = document.getElementById('fc-desc').value.trim(), final_category = document.getElementById('fc-final').value; if (!description) return alert('Uraian temuan wajib diisi.');
+            const { error } = fcEditId ? await sb.from('finding_categories').update({ description, final_category }).eq('id', fcEditId) : await sb.from('finding_categories').insert({ description, final_category });
+            if (error) return alert('Gagal: ' + error.message);
+            fcEditId = null; document.getElementById('fc-desc').value = ''; document.getElementById('fc-btn').innerText = 'Tambah'; await loadData(); renderFindingCats();
+        }
+
+        // ---------- Master User (nama lengkap, jabatan, PIC) ----------
+        function renderUserTable() {
+            document.getElementById('user-table-body').innerHTML = users.map(u => {
+                const summary = u.role === 'Admin' ? 'Akses penuh' : MENUS.filter(([k]) => (u.permissions || {})[k] && u.permissions[k] !== 'none').map(([k, l]) => `${l} (${u.permissions[k] === 'input' ? 'input' : 'lihat'})`).join(', ') || '<i class="text-red-500">Belum ada akses</i>';
+                return `<tr class="border-b"><td class="p-3"><b>${esc(u.full_name || u.username)}</b><div class="text-xs text-gray-500">${esc(u.username)}</div></td><td class="p-3 text-sm">${esc(u.jabatan || '-')}</td><td class="p-3 text-sm">${esc(u.email || '-')}</td><td class="p-3">${esc(u.role)}</td><td class="p-3">${esc(u.dept)}${u.is_pic ? ' <span class="text-xs bg-green-100 text-green-800 px-2 rounded">PIC</span>' : ''}</td><td class="p-3 text-xs text-gray-600">${summary}</td><td class="p-3"><button onclick="openUserModal('${esc(u.id)}')" class="text-indigo-600 hover:underline text-sm"><i class="fas fa-edit mr-1"></i>Atur</button></td></tr>`;
+            }).join('');
+        }
+        function openUserModal(id) {
+            editingUserId = id || null; const u = users.find(x => x.id === id), set = (i, v) => document.getElementById(i).value = v || '';
+            document.getElementById('user-modal-title').innerText = u ? 'Atur User: ' + (u.full_name || u.username) : 'Tambah User';
+            set('inp-user-email', u && u.email); set('inp-user-uname', u && u.username); set('inp-user-fullname', u && u.full_name); set('inp-user-jabatan', u && u.jabatan); set('inp-user-pass', '');
+            document.getElementById('inp-user-pic').checked = !!(u && u.is_pic);
+            document.getElementById('inp-user-email').disabled = !!u; document.getElementById('inp-user-uname').disabled = false;
+            document.getElementById('inp-user-pass').classList.toggle('hidden', !!u);
+            document.getElementById('inp-user-role').value = u ? u.role : 'User'; document.getElementById('inp-user-dept').value = u ? u.dept : (departments[0] || 'ALL');
+            buildAccessGrid(u ? u.permissions : defaultPerms('User')); showModal('modal-user');
+        }
+        async function saveUser() {
+            const g = i => document.getElementById(i).value.trim(), role = g('inp-user-role'), dept = g('inp-user-dept'), username = g('inp-user-uname');
+            const permissions = {}; document.querySelectorAll('#access-grid select').forEach(sel => { if (sel.value !== 'none') permissions[sel.dataset.menu] = sel.value; });
+            const extra = { full_name: g('inp-user-fullname') || null, jabatan: g('inp-user-jabatan') || null, is_pic: document.getElementById('inp-user-pic').checked };
+            if (!username) return alert('Username wajib diisi.');
+            if (role === 'User' && dept === 'ALL') return alert('User (Kepala Bagian) harus dipilih satu departemen, bukan ALL.');
+            let error;
+            if (editingUserId) {
+                if (editingUserId === currentUser.id && role !== 'Admin') return alert('Anda tidak bisa menurunkan role akun Anda sendiri.');
+                ({ error } = await sb.from('profiles').update({ username, role, dept, permissions, ...extra }).eq('id', editingUserId));
+            } else {
+                const email = g('inp-user-email'), password = document.getElementById('inp-user-pass').value;
+                if (!email || password.length < 8) return alert('Email dan password (min. 8 karakter) wajib diisi.');
+                const res = await sb.functions.invoke('create-user', { body: { email, username, password, role, dept, permissions } });
+                error = res.error || (res.data && res.data.error ? { message: res.data.error } : null);
+                if (!error) ({ error } = await sb.from('profiles').update(extra).eq('username', username));
+            }
+            if (error) return alert('Gagal menyimpan: ' + error.message);
+            if (extra.is_pic && dept !== 'ALL') await sb.from('profiles').update({ is_pic: false }).eq('dept', dept).neq('username', username);
+            hideModal('modal-user'); await loadData(); renderUserTable(); alert('User berhasil disimpan.');
+        }
+
+        // ---------- Audit: verifikator dari akun login, PIC dari master user ----------
+        async function fillPic() {
+            const dept = document.getElementById('audit-dept-select').value; if (!dept || dept === 'ALL') return;
+            const { data } = await sb.rpc('dept_pic', { p_dept: dept }), r = data && data[0];
+            document.getElementById('audit-pic-name').value = r ? r.full_name : ''; document.getElementById('audit-pic-title').value = r ? (r.jabatan || '') : '';
+        }
+        const _renderAuditSection = renderAuditSection;
+        renderAuditSection = function () {
+            _renderAuditSection();
+            document.getElementById('audit-verifikator').value = currentUser.full_name || currentUser.username || '';
+            document.getElementById('audit-verifier-title').value = currentUser.jabatan || '';
+            document.getElementById('audit-opl-select').onchange = e => { const o = opls.find(x => x.id === e.target.value); if (o) { document.getElementById('audit-dept-select').value = o.dept; fillPic(); } };
+            document.getElementById('audit-dept-select').onchange = fillPic;
+        };
     </script>
 </body>
 </html>
