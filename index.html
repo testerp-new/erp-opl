@@ -68,6 +68,7 @@
                 <button onclick="showSection('tickets')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700">
                     <i class="fas fa-ticket-alt mr-2"></i> Tiket CAPA <span id="ticket-badge" class="ml-2 bg-red-500 text-white rounded-full h-5 w-5 inline-flex items-center justify-center text-xs hidden">0</span>
                 </button>
+                <button onclick="showSection('rekap-monitoring')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-table-cells mr-2"></i> Rekap Monitoring</button>
                 <button onclick="showSection('recap')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-chart-bar mr-2"></i> Rekapitulasi</button>
             </nav>
             <div class="p-4 border-t border-gray-700">
@@ -237,6 +238,17 @@
                 </div>
 
                 <!-- REKAP -->
+                <div id="sec-rekap-monitoring" class="section hidden fade-in">
+                    <div class="bg-white rounded-lg shadow p-4 mb-4 flex flex-wrap gap-4 items-end">
+                        <div><label class="block text-sm font-bold mb-1">Tampilan</label><select id="rm-view" onchange="renderRekapMon()" class="keep-read border p-2 rounded"><option value="week">Per Minggu</option><option value="month">Per Bulan</option></select></div>
+                        <div id="rm-month-wrap"><label class="block text-sm font-bold mb-1">Bulan</label><input type="month" id="rm-month" onchange="renderRekapMon()" class="keep-read border p-2 rounded"></div>
+                        <div id="rm-year-wrap" class="hidden"><label class="block text-sm font-bold mb-1">Tahun</label><input type="number" id="rm-year" min="2024" max="2100" onchange="renderRekapMon()" class="keep-read border p-2 rounded w-28"></div>
+                        <div><label class="block text-sm font-bold mb-1">Bagian</label><select id="rm-dept" onchange="renderRekapMon()" class="keep-read border p-2 rounded"></select></div>
+                    </div>
+                    <div id="rm-body" class="bg-white rounded-lg shadow p-4 overflow-x-auto"></div>
+                    <div id="rm-kpi" class="bg-white rounded-lg shadow p-4 mt-6 overflow-x-auto"></div>
+                </div>
+
                 <div id="sec-recap" class="section hidden fade-in">
                     <div class="bg-white p-6 rounded-lg shadow">
                         <h3 class="font-bold text-lg mb-4">Rekapitulasi Penilaian</h3>
@@ -318,8 +330,8 @@
             </div>
 
             <div class="mb-2">
-                <label class="block text-sm font-bold mb-1">Upload Gambar OPL (Wajib)</label>
-                <input type="file" id="trigger-img" accept="image/*" class="w-full border p-2 rounded">
+                <label class="block text-sm font-bold mb-1">Upload Gambar / PDF OPL (Wajib)</label>
+                <input type="file" id="trigger-img" accept="image/*,application/pdf" class="w-full border p-2 rounded">
             </div>
             <div class="flex justify-end space-x-2 mt-4"><button onclick="hideModal('modal-opl')" class="px-4 py-2 bg-gray-300 rounded">Batal</button><button onclick="createNewOPL()" class="px-4 py-2 bg-blue-600 text-white rounded">Buat OPL</button></div>
         </div>
@@ -424,7 +436,7 @@
         function showSection(sectionName) {
             document.querySelectorAll('.section').forEach(el => el.classList.add('hidden'));
             document.getElementById(`sec-${sectionName}`).classList.remove('hidden');
-            const titles = { 'dashboard': 'Dashboard', 'master-dept': 'Master Departemen', 'master-user': 'Master User', 'opl-master': 'Master OPL', 'reporting': 'Pelaporan OPL', 'audit': 'Audit & Penilaian', 'tickets': 'Tiket CAPA', 'recap': 'Rekapitulasi', 'opl-saya': 'OPL Saya', 'master-temuan': 'Master Temuan', 'recurrence': 'Kejadian Berulang' };
+            const titles = { 'dashboard': 'Dashboard', 'master-dept': 'Master Departemen', 'master-user': 'Master User', 'opl-master': 'Master OPL', 'reporting': 'Pelaporan OPL', 'audit': 'Audit & Penilaian', 'tickets': 'Tiket CAPA', 'recap': 'Rekapitulasi', 'opl-saya': 'OPL Saya', 'master-temuan': 'Master Temuan', 'recurrence': 'Kejadian Berulang', 'rekap-monitoring': 'Rekap Monitoring' };
             document.getElementById('page-title').innerText = titles[sectionName];
             if(sectionName === 'dashboard') renderDashboard();
             if(sectionName === 'master-dept') renderDeptTable();
@@ -437,6 +449,7 @@
             if(sectionName === 'opl-saya') renderOplSaya();
             if(sectionName === 'master-temuan') renderFindingCats();
             if(sectionName === 'recurrence') renderRecurrence();
+            if(sectionName === 'rekap-monitoring') renderRekapMon();
         }
 
         function showModal(id) { document.getElementById(id).classList.remove('hidden'); }
@@ -486,7 +499,7 @@
             const caseName = document.getElementById('trigger-case').value.trim(), oplName = document.getElementById('trigger-opl-name').value.trim(), dept = document.getElementById('trigger-dept').value, reportType = document.getElementById('trigger-report-type').value;
             if (!caseName || !oplName) return alert('Harap isi Case dan Nama OPL!');
             if (dept === 'ALL') return alert('Pilih satu departemen untuk OPL ini.');
-            const image = await compressImage('trigger-img'); if (!image) return alert('Upload Gambar OPL wajib dilakukan!');
+            let image; try { image = await uploadFile('trigger-img', 'opl'); } catch (e) { return alert('Gagal upload file: ' + (e.message || e)); } if (!image) return alert('Upload Gambar atau PDF OPL wajib dilakukan!');
             const nums = opls.map(o => parseInt(o.id.replace(/\D/g, '')) || 0), id = 'OPL' + String(Math.max(0, ...nums) + 1).padStart(3, '0');
             const exp = new Date(); exp.setMonth(exp.getMonth() + 6);
             const { error } = await sb.from('opls').insert({ id, case_name: caseName, name: oplName, dept, report_type: reportType, creation_date: new Date().toISOString().slice(0, 10), expiry_date: exp.toISOString().slice(0, 10), status: 'OPEN', image_url: image });
@@ -508,7 +521,7 @@
                 html += `
                     <tr class="border-b hover:bg-gray-50">
                         <td class="p-3 font-mono text-sm">${opl.id}</td>
-                        <td class="p-3">${opl.image ? `<img src="${opl.image}" class="thumb" onclick="previewImage('${opl.image}')">` : '-'}</td>
+                        <td class="p-3">${thumbHtml(opl.image)}</td>
                         <td class="p-3 text-sm">${opl.case}</td>
                         <td class="p-3 text-sm font-medium">${opl.name}</td>
                         <td class="p-3 text-sm">${opl.dept}</td>
@@ -544,7 +557,7 @@
                     <div class="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
                         <div class="flex justify-between items-start mb-3">
                             <div><h4 class="font-bold text-blue-800">${opl.id} - ${opl.name}</h4><p class="text-sm text-gray-500">${opl.case}</p></div>
-                            <select class="border p-1 rounded text-sm bg-green-50"><option value="Done">Done (☑)</option><option value="Not Done">Not Done (x)</option></select>
+                            <select id="report-status-${opl.id}" class="border p-1 rounded text-sm bg-green-50"><option value="Done">Done (☑)</option><option value="Not Done">Not Done (x)</option></select>
                         </div>
                         <div class="bg-gray-50 p-3 rounded border border-dashed border-gray-300">
                             <label class="block text-xs font-bold text-red-600 mb-1"><i class="fas fa-camera mr-1"></i> Wajib Upload Bukti Pelaporan</label>
@@ -565,23 +578,29 @@
         async function saveDailyReport() {
             const myOpls = currentUser.dept === 'ALL' ? opls : opls.filter(o => o.dept === currentUser.dept);
             const harianOpls = myOpls.filter(o => o.reportType === 'Harian');
-            let allValid = true;
-            for(let opl of harianOpls) {
-                const fileInput = document.getElementById(`report-img-${opl.id}`);
-                if(!fileInput.files || fileInput.files.length === 0) { allValid = false; break; }
+            for (let opl of harianOpls) {
+                const fi = document.getElementById(`report-img-${opl.id}`);
+                if (!fi.files || fi.files.length === 0) return alert("GAGAL SIMPAN: Semua pelaporan harian wajib diattach foto bukti!");
             }
-            if(!allValid) return alert("GAGAL SIMPAN: Semua pelaporan harian wajib diattach foto bukti!");
+            const rows = [];
+            try {
+                for (let opl of harianOpls) rows.push({ opl_id: opl.id, report_date: localDate(new Date()), status: document.getElementById(`report-status-${opl.id}`).value, image_url: await uploadFile(`report-img-${opl.id}`, 'harian'), reported_by: currentUser.id });
+            } catch (e) { return alert('Gagal upload foto: ' + (e.message || e)); }
+            if (!rows.length) return alert('Tidak ada OPL Harian untuk dilaporkan.');
+            const { error } = await sb.from('daily_reports').upsert(rows, { onConflict: 'opl_id,report_date' });
+            if (error) return alert('Gagal menyimpan laporan: ' + error.message);
             alert("Laporan harian berhasil disimpan!");
         }
 
         async function submitCaseReport() {
             const oplId = document.getElementById('kasus-opl-select').value;
             const desc = document.getElementById('kasus-desc').value;
-            if(!oplId) return alert('Pilih OPL Kasus terlebih dahulu!');
-            
+            if (!oplId) return alert('Pilih OPL Kasus terlebih dahulu!');
             const fileInput = document.getElementById('kasus-img');
-            if(!fileInput.files || fileInput.files.length === 0) return alert("GAGAL: Laporan kasus wajib diattach foto bukti!");
-            
+            if (!fileInput.files || fileInput.files.length === 0) return alert("GAGAL: Laporan kasus wajib diattach foto bukti!");
+            let image; try { image = await uploadFile('kasus-img', 'kasus'); } catch (e) { return alert('Gagal upload foto: ' + (e.message || e)); }
+            const { error } = await sb.from('case_reports').insert({ opl_id: oplId, description: desc, image_url: image, reported_by: currentUser.id });
+            if (error) return alert('Gagal menyimpan laporan: ' + error.message);
             alert(`Laporan kasus untuk ${oplId} berhasil dikirim! Deskripsi: ${desc}`);
         }
 
@@ -677,7 +696,7 @@
         }
 
         // --- HAK AKSES MENU ---
-        const MENUS = [['dashboard','Dashboard'],['master-dept','Departemen'],['master-user','User'],['opl-master','Master OPL'],['master-temuan','Master Temuan'],['opl-saya','OPL Saya'],['reporting','Pelaporan'],['audit','Audit'],['recurrence','Kejadian Berulang'],['tickets','Tiket CAPA'],['recap','Rekapitulasi']];
+        const MENUS = [['dashboard','Dashboard'],['master-dept','Departemen'],['master-user','User'],['opl-master','Master OPL'],['master-temuan','Master Temuan'],['opl-saya','OPL Saya'],['reporting','Pelaporan'],['audit','Audit'],['recurrence','Kejadian Berulang'],['rekap-monitoring','Rekap Monitoring'],['tickets','Tiket CAPA'],['recap','Rekapitulasi']];
         const LEVEL_LABEL = { none: 'Tidak ada', read: 'Lihat saja', input: 'Input' };
         function esc(v) { return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
         function perm(k) { if (!currentUser) return 'none'; if (currentUser.role === 'Admin') return 'input'; return (currentUser.permissions || {})[k] || 'none'; }
@@ -692,7 +711,7 @@
             const sec = document.getElementById('sec-' + name);
             sec.querySelectorAll('.ro-note').forEach(n => n.remove());
             if (perm(name) === 'read') {
-                sec.querySelectorAll('button:not(.keep-read), input, select, textarea').forEach(e => e.disabled = true);
+                sec.querySelectorAll('button:not(.keep-read), input:not(.keep-read), select:not(.keep-read), textarea:not(.keep-read)').forEach(e => e.disabled = true);
                 sec.insertAdjacentHTML('afterbegin', '<div class="ro-note bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm p-2 rounded mb-3"><i class="fas fa-eye mr-1"></i> Mode lihat saja: Anda tidak dapat mengubah data di menu ini.</div>');
             }
         };
@@ -714,16 +733,16 @@
             document.getElementById('opl-view-title').innerText = `${o.id} - ${o.name}`;
             document.getElementById('opl-view-body').innerHTML = `
                 <div class="grid grid-cols-2 gap-2 text-sm mb-3"><p><b>Case:</b> ${esc(o.case)}</p><p><b>Bagian:</b> ${esc(o.dept)}</p><p><b>Tipe laporan:</b> ${esc(o.reportType)}</p><p><b>Status:</b> ${esc(o.status)}</p><p><b>Dibuat:</b> ${esc(o.creationDate)}</p><p><b>Berlaku s/d:</b> ${esc(o.expiryDate || '-')}</p></div>
-                ${o.image ? `<img src="${esc(o.image)}" class="w-full rounded border">` : '<p class="text-gray-500 italic">Gambar OPL belum tersedia.</p>'}${oplHistoryHtml(o.id)}`;
+                ${fileViewHtml(o.image)}${oplHistoryHtml(o.id)}`;
             showModal('modal-opl-view');
         }
 
         // --- MASTER USER ---
         let editingUserId = null;
         function defaultPerms(role) {
-            if (role === 'Auditor') return { dashboard: 'read', 'opl-master': 'read', 'opl-saya': 'read', audit: 'input', recurrence: 'input', tickets: 'input', recap: 'read' };
+            if (role === 'Auditor') return { dashboard: 'read', 'opl-master': 'read', 'opl-saya': 'read', audit: 'input', recurrence: 'input', tickets: 'input', recap: 'read', 'rekap-monitoring': 'read' };
             if (role === 'Admin') return Object.fromEntries(MENUS.map(([k]) => [k, 'input']));
-            return { dashboard: 'read', 'opl-saya': 'read', reporting: 'input', recurrence: 'input', tickets: 'input', recap: 'read' };
+            return { dashboard: 'read', 'opl-saya': 'read', reporting: 'input', recurrence: 'input', tickets: 'input', recap: 'read', 'rekap-monitoring': 'read' };
         }
         function buildAccessGrid(p) {
             document.getElementById('access-grid').innerHTML = MENUS.map(([k, l]) => `<div class="flex justify-between items-center text-sm"><span>${l}</span><select data-menu="${k}" class="border p-1 rounded">${Object.entries(LEVEL_LABEL).map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select></div>`).join('');
@@ -796,7 +815,7 @@
             const oplId = g('rec-opl'), dept = g('rec-dept'), desc = g('rec-desc'), date = g('rec-date');
             if (!oplId || !desc || !date) return alert('OPL, tanggal, dan uraian kejadian wajib diisi.');
             if (!dept || dept === 'ALL') return alert('Pilih bagian tempat kejadian.');
-            const image = await compressImage('rec-img'); if (!image) return alert('Foto bukti wajib diupload.');
+            let image; try { image = await uploadFile('rec-img', 'kejadian'); } catch (e) { return alert('Gagal upload foto: ' + (e.message || e)); } if (!image) return alert('Foto bukti wajib diupload.');
             const { error } = await sb.from('recurrence_reports').insert({ opl_id: oplId, occurred_on: date, occurred_dept: dept, description: desc, image_url: image, reported_by: currentUser.id });
             if (error) return alert('Gagal menyimpan: ' + error.message);
             const owner = (opls.find(o => o.id === oplId) || {}).dept;
@@ -855,6 +874,108 @@
             document.getElementById('eff-wrap').innerHTML = `<h3 class="font-bold text-lg mb-1">Efektivitas OPL</h3><p class="text-sm text-gray-500 mb-3">Status dihitung dari kejadian berulang sejak OPL versi saat ini berlaku (0 = Efektif, 1 = Perlu Ditinjau, 2 atau lebih = Tidak Efektif).</p><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-3">OPL</th><th class="p-3">Bagian</th><th class="p-3">Berlaku Sejak</th><th class="p-3">Total Riwayat</th><th class="p-3">Sejak Berlaku</th><th class="p-3">Kejadian Terakhir</th><th class="p-3">Status</th></tr></thead><tbody>${rows}</tbody></table>`;
         }
         const _renderRecap = renderRecap; renderRecap = function () { _renderRecap(); renderEff(); };
+
+        // --- UPLOAD FILE (Supabase Storage) ---
+        function localDate(v) { const d = new Date(v); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+        const isPdf = u => /\.pdf(\?|$)/i.test(u || '') || String(u || '').startsWith('data:application/pdf');
+        async function uploadFile(inputId, folder) {
+            const f = document.getElementById(inputId).files[0]; if (!f) return null;
+            let body = f, ext = 'pdf', type = 'application/pdf';
+            if (f.type === 'application/pdf') { if (f.size > 10 * 1024 * 1024) throw new Error('PDF maksimal 10 MB.'); }
+            else { const data = await compressImage(inputId); if (!data) throw new Error('File harus berupa gambar atau PDF.'); body = await (await fetch(data)).blob(); ext = 'jpg'; type = 'image/jpeg'; }
+            const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+            const { error } = await sb.storage.from('opl-files').upload(path, body, { contentType: type });
+            if (error) throw error;
+            return sb.storage.from('opl-files').getPublicUrl(path).data.publicUrl;
+        }
+        function thumbHtml(u) {
+            if (!u) return '-';
+            return isPdf(u) ? `<a href="${esc(u)}" target="_blank" class="text-red-600" title="Buka PDF"><i class="fas fa-file-pdf text-2xl"></i></a>` : `<img src="${esc(u)}" class="thumb" onclick="previewImage(this.src)">`;
+        }
+        function fileViewHtml(u) {
+            if (!u) return '<p class="text-gray-500 italic">File OPL belum tersedia.</p>';
+            return isPdf(u) ? `<iframe src="${esc(u)}" class="w-full rounded border" style="height:70vh"></iframe><p class="text-sm mt-1"><a href="${esc(u)}" target="_blank" class="text-blue-600 underline"><i class="fas fa-up-right-from-square mr-1"></i>Buka PDF di tab baru</a></p>` : `<img src="${esc(u)}" class="w-full rounded border">`;
+        }
+
+        // --- REKAP MONITORING (mengikuti OPL_REKAP.xlsx: sheet REKAP MONITORING & KPI) ---
+        const KPI_BOBOT = 15, KPI_MIN = 90; // KPI_MIN: batas persen pelaporan dianggap konsisten
+        const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        let rmToken = 0;
+        const weekOf = ds => Math.min(5, Math.ceil(parseInt(ds.slice(8, 10)) / 7));
+        const pct = (ok, x) => (ok + x) ? Math.round(ok / (ok + x) * 100) + '%' : '-';
+        const pctCls = (ok, x) => !(ok + x) ? 'text-gray-400' : (ok === ok + x ? 'bg-green-100 text-green-800' : (ok / (ok + x) * 100 >= KPI_MIN ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'));
+        const pcell = (ok, x, extra = '') => `<td class="p-2 text-center ${extra}"><span class="px-2 py-1 rounded text-xs font-bold ${pctCls(ok, x)}" title="☑ ${ok} / x ${x}">${pct(ok, x)}</span></td>`;
+        async function fetchRows(table, cols, dateCol, from, to) {
+            let all = [], start = 0;
+            for (;;) {
+                const { data, error } = await sb.from(table).select(cols).gte(dateCol, from).lte(dateCol, to).order(dateCol).range(start, start + 999);
+                if (error) throw error; all = all.concat(data); if (data.length < 1000) break; start += 1000;
+            }
+            return all;
+        }
+        async function loadEntries(from, to) {
+            const [d, c] = await Promise.all([fetchRows('daily_reports', 'opl_id, report_date, status', 'report_date', from, to), fetchRows('case_reports', 'opl_id, created_at', 'created_at', from, to + 'T23:59:59')]);
+            const map = {};
+            d.forEach(r => (map[r.opl_id] = map[r.opl_id] || []).push({ date: r.report_date, ok: r.status === 'Done' }));
+            c.forEach(r => (map[r.opl_id] = map[r.opl_id] || []).push({ date: localDate(r.created_at), ok: true }));
+            return map;
+        }
+        const tally = (list, f) => list.filter(f).reduce((a, e) => { e.ok ? a.ok++ : a.x++; return a; }, { ok: 0, x: 0 });
+
+        async function renderRekapMon() {
+            const view = document.getElementById('rm-view').value, token = ++rmToken;
+            const now = new Date();
+            if (!document.getElementById('rm-month').value) document.getElementById('rm-month').value = localDate(now).slice(0, 7);
+            if (!document.getElementById('rm-year').value) document.getElementById('rm-year').value = now.getFullYear();
+            const deptSel = document.getElementById('rm-dept'), prevDept = deptSel.value, depts = [...new Set(opls.map(o => o.dept))].sort();
+            deptSel.innerHTML = '<option value="">Semua bagian</option>' + depts.map(d => `<option>${esc(d)}</option>`).join(''); deptSel.value = depts.includes(prevDept) ? prevDept : '';
+            document.getElementById('rm-month-wrap').classList.toggle('hidden', view !== 'week');
+            document.getElementById('rm-year-wrap').classList.toggle('hidden', view !== 'month');
+            const list = opls.filter(o => !deptSel.value || o.dept === deptSel.value).sort((a, b) => a.dept.localeCompare(b.dept) || a.id.localeCompare(b.id));
+            const body = document.getElementById('rm-body'), kpi = document.getElementById('rm-kpi');
+            body.innerHTML = '<p class="text-gray-500">Memuat data...</p>'; kpi.innerHTML = '';
+            let ym, year, from, to;
+            if (view === 'week') { ym = document.getElementById('rm-month').value; const [y, m] = ym.split('-').map(Number); from = ym + '-01'; to = `${ym}-${String(new Date(y, m, 0).getDate()).padStart(2, '0')}`; }
+            else { year = document.getElementById('rm-year').value; from = year + '-01-01'; to = year + '-12-31'; }
+            let map; try { map = await loadEntries(from, to); } catch (e) { return body.innerHTML = '<p class="text-red-600">Gagal memuat: ' + esc(e.message) + '</p>'; }
+            if (token !== rmToken) return;
+            const note = '<p class="text-xs text-gray-500 mb-3">☑ = laporan Done, x = Not Done. % = ☑ / (☑ + x). Hari tanpa laporan tidak dihitung. Warna: hijau 100%, kuning ≥ ' + KPI_MIN + '%, merah di bawahnya.</p>';
+            const rowHead = o => `<td class="p-2 text-sm"><b>${esc(o.id)}</b> ${esc(o.name)}</td><td class="p-2 text-sm">${esc(o.dept)}</td><td class="p-2 text-xs">${esc(o.reportType)}</td>`;
+            if (view === 'week') {
+                const head = [1, 2, 3, 4, 5].map(w => `<th class="p-2 text-center" colspan="3">W${w}</th>`).join('');
+                const sub = [1, 2, 3, 4, 5].map(() => '<th class="p-1 text-center text-xs">☑</th><th class="p-1 text-center text-xs">x</th><th class="p-1 text-center text-xs">%</th>').join('');
+                const rowFor = (label, es) => { let tot = { ok: 0, x: 0 }, cells = '';
+                    for (let w = 1; w <= 5; w++) { const t = tally(es, e => weekOf(e.date) === w); tot.ok += t.ok; tot.x += t.x; cells += `<td class="p-1 text-center text-sm">${t.ok || ''}</td><td class="p-1 text-center text-sm">${t.x || ''}</td>${pcell(t.ok, t.x)}`; }
+                    return { cells, tot }; };
+                const rows = list.map(o => { const r = rowFor(o, map[o.id] || []); return `<tr class="border-b">${rowHead(o)}${r.cells}${pcell(r.tot.ok, r.tot.x, 'border-l-2')}</tr>`; }).join('');
+                const sum = depts.filter(d => !deptSel.value || d === deptSel.value).map(d => { const es = list.filter(o => o.dept === d).flatMap(o => map[o.id] || []); const r = rowFor(d, es); return `<tr class="border-b bg-gray-50 font-bold"><td class="p-2 text-sm" colspan="3">TOTAL ${esc(d)}</td>${r.cells}${pcell(r.tot.ok, r.tot.x, 'border-l-2')}</tr>`; }).join('');
+                body.innerHTML = note + `<table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2" rowspan="2">OPL</th><th class="p-2" rowspan="2">Bagian</th><th class="p-2" rowspan="2">Tipe</th>${head}<th class="p-2 text-center border-l-2" rowspan="2">TOTAL BULAN</th></tr><tr class="bg-gray-100">${sub}</tr></thead><tbody>${rows || '<tr><td class="p-3 text-gray-500" colspan="19">Belum ada OPL.</td></tr>'}${sum}</tbody></table>`;
+                renderKpi(kpi, ym, list, map, depts.filter(d => !deptSel.value || d === deptSel.value));
+            } else {
+                const cellsFor = es => { let tot = { ok: 0, x: 0 }, c = ''; for (let m = 1; m <= 12; m++) { const p = `${year}-${String(m).padStart(2, '0')}`, t = tally(es, e => e.date.slice(0, 7) === p); tot.ok += t.ok; tot.x += t.x; c += pcell(t.ok, t.x); } return c + pcell(tot.ok, tot.x, 'border-l-2'); };
+                const rows = list.map(o => `<tr class="border-b">${rowHead(o)}${cellsFor(map[o.id] || [])}</tr>`).join('');
+                const sum = depts.filter(d => !deptSel.value || d === deptSel.value).map(d => `<tr class="border-b bg-gray-50 font-bold"><td class="p-2 text-sm" colspan="3">TOTAL ${esc(d)}</td>${cellsFor(list.filter(o => o.dept === d).flatMap(o => map[o.id] || []))}</tr>`).join('');
+                body.innerHTML = note + `<table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2">OPL</th><th class="p-2">Bagian</th><th class="p-2">Tipe</th>${MONTHS.map(m => `<th class="p-2 text-center">${m}</th>`).join('')}<th class="p-2 text-center border-l-2">TOTAL ${year}</th></tr></thead><tbody>${rows || '<tr><td class="p-3 text-gray-500" colspan="16">Belum ada OPL.</td></tr>'}${sum}</tbody></table>`;
+            }
+        }
+
+        // --- KPI Pelaporan OPL (sheet KPI: bobot 15, IP 100% / 50% / 0%) ---
+        function renderKpi(el, ym, list, map, depts) {
+            const today = localDate(new Date());
+            const rows = depts.map(d => {
+                const mine = list.filter(o => o.dept === d), ids = mine.map(o => o.id), t = tally(mine.flatMap(o => map[o.id] || []), () => true);
+                const found = audits.filter(a => a.dept === d && a.finding !== 'OK' && String(a.date).slice(0, 7) === ym);
+                const perOpl = {}; found.forEach(a => perOpl[a.oplId] = (perOpl[a.oplId] || 0) + 1);
+                const repeated = found.some(a => a.isRepeated) || Object.values(perOpl).some(n => n > 1);
+                const overdue = capaTickets.filter(c => c.dept === d && c.status !== 'CLOSED' && c.target && c.target < today).length;
+                const p = (t.ok + t.x) ? t.ok / (t.ok + t.x) * 100 : null, inconsistent = p !== null && p < KPI_MIN;
+                let factor = 1, why = 'Pelaporan konsisten dan tidak ada temuan audit.';
+                if (repeated || overdue || inconsistent) { factor = 0; why = [repeated ? 'temuan audit berulang' : '', overdue ? 'tindak lanjut CAPA melewati batas waktu' : '', inconsistent ? 'pelaporan tidak konsisten' : ''].filter(Boolean).join(', '); why = why.charAt(0).toUpperCase() + why.slice(1) + '.'; }
+                else if (found.length >= 1) { factor = 0.5; why = `Ada ${found.length} temuan audit pada periode ini.`; }
+                return `<tr class="border-b"><td class="p-2 font-bold">${esc(d)}</td><td class="p-2 text-center">${p === null ? '-' : Math.round(p) + '%'}</td><td class="p-2 text-center">${found.length}</td><td class="p-2 text-center">${repeated ? 'Ya' : '-'}</td><td class="p-2 text-center">${overdue || '-'}</td><td class="p-2 text-center font-bold ${factor === 1 ? 'text-green-700' : factor === 0.5 ? 'text-yellow-700' : 'text-red-700'}">${KPI_BOBOT * factor} / ${KPI_BOBOT}</td><td class="p-2 text-sm">${why}</td></tr>`;
+            }).join('');
+            el.innerHTML = `<h3 class="font-bold text-lg mb-1">Nilai KPI Pelaporan OPL (bulan terpilih)</h3><p class="text-xs text-gray-500 mb-3">IP 100% = pelaporan konsisten (≥ ${KPI_MIN}%) dan tanpa temuan audit. IP 50% = 1 temuan audit. IP 0% = temuan berulang / lebih dari satu pada OPL yang sama, tindak lanjut melewati batas waktu, atau pelaporan tidak konsisten. Bobot ${KPI_BOBOT}.</p><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2">Bagian</th><th class="p-2 text-center">Pelaporan</th><th class="p-2 text-center">Temuan Audit</th><th class="p-2 text-center">Berulang</th><th class="p-2 text-center">CAPA Terlambat</th><th class="p-2 text-center">Nilai KPI</th><th class="p-2">Keterangan</th></tr></thead><tbody>${rows || '<tr><td class="p-3 text-gray-500" colspan="7">Belum ada data.</td></tr>'}</tbody></table>`;
+        }
     </script>
 </body>
 </html>
