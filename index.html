@@ -74,7 +74,7 @@
                 <button onclick="showSection('master-setting')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-sliders mr-2"></i> Pengaturan KPI</button>
             </nav>
             <div class="p-4 border-t border-gray-700">
-                <div class="text-xs text-gray-500 px-3 py-1">Versi 9 Okt 2026 (d): periode minggu Jumat-Kamis</div>
+                <div class="text-xs text-gray-500 px-3 py-1">Versi 9 Okt 2026 (e): minggu Jumat-Kamis dipotong per bulan; pelaporan satu halaman</div>
                 <button onclick="handleLogout()" class="w-full text-left py-2 px-3 rounded hover:bg-red-600 text-red-400"><i class="fas fa-sign-out-alt mr-2"></i> Logout</button>
             </div>
         </div>
@@ -160,23 +160,16 @@
                 <div id="sec-reporting" class="section hidden fade-in">
                     <h3 class="font-bold text-lg mb-4">Pelaporan OPL (Wajib Upload Bukti Gambar)</h3>
                     
-                    <div class="flex mb-4 border-b">
-                        <button onclick="switchReportTab('harian')" id="tab-harian" class="py-2 px-4 tab-active">
-                            <i class="fas fa-calendar-check mr-1"></i> Pelaporan Harian
-                        </button>
-                        <button onclick="switchReportTab('kasus')" id="tab-kasus" class="py-2 px-4">
-                            <i class="fas fa-exclamation-circle mr-1"></i> Khusus Pelaporan Kasus
-                        </button>
-                    </div>
+                    
 
                     <!-- Tab Harian -->
-                    <div id="report-harian" class="fade-in">
+                    <div id="report-harian" class="fade-in"><h4 class="font-bold text-blue-800 mb-3"><i class="fas fa-calendar-check mr-2"></i> Pelaporan Harian</h4>
                         <div id="daily-checklist" class="space-y-4"></div>
                         <button class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" onclick="saveDailyReport()"><i class="fas fa-save mr-2"></i> Simpan Laporan Harian</button>
                     </div>
 
                     <!-- Tab Kasus -->
-                    <div id="report-kasus" class="hidden fade-in">
+                    <div id="report-kasus" class="fade-in mt-8"><h4 class="font-bold text-purple-800 mb-3"><i class="fas fa-exclamation-circle mr-2"></i> Pelaporan Kasus</h4>
                         <div class="bg-white p-6 rounded-lg shadow">
                             <h4 class="font-bold mb-3 text-yellow-700"><i class="fas fa-exclamation-triangle mr-2"></i> Laporan ini hanya untuk OPL bertipe "Khusus Kasus"</h4>
                             <div class="grid grid-cols-2 gap-4 mb-4">
@@ -334,6 +327,17 @@
             <label class="block text-sm font-bold mb-1">Tanggal Penutupan</label><input type="date" id="oc-date" class="w-full border p-2 rounded mb-2">
             <label class="block text-sm font-bold mb-1">Catatan</label><textarea id="oc-note" rows="2" class="w-full border p-2 rounded mb-4"></textarea>
             <div class="flex justify-end space-x-2"><button onclick="hideModal('modal-opl-close')" class="px-4 py-2 bg-gray-300 rounded">Batal</button><button onclick="saveOplClose()" class="px-4 py-2 bg-red-600 text-white rounded">Tutup OPL</button></div>
+        </div>
+    </div>
+
+    <!-- Modal Edit Laporan Kasus (Admin) -->
+    <div id="modal-case-edit" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg w-[30rem] max-w-[95vw] shadow-2xl">
+            <h3 class="text-xl font-bold mb-3">Edit Laporan Kasus</h3>
+            <label class="block text-sm font-bold mb-1">OPL Kasus</label><select id="ce-opl" class="w-full border p-2 rounded mb-2"></select>
+            <label class="block text-sm font-bold mb-1">Tanggal Laporan</label><input type="date" id="ce-date" class="w-full border p-2 rounded mb-2">
+            <label class="block text-sm font-bold mb-1">Deskripsi</label><textarea id="ce-desc" rows="3" class="w-full border p-2 rounded mb-4"></textarea>
+            <div class="flex justify-end space-x-2"><button onclick="hideModal('modal-case-edit')" class="px-4 py-2 bg-gray-300 rounded">Batal</button><button onclick="saveCaseEdit()" class="px-4 py-2 bg-blue-600 text-white rounded">Simpan</button></div>
         </div>
     </div>
 
@@ -1010,11 +1014,15 @@
         const addDays = (ds, n) => { const d = new Date(ds + 'T00:00:00'); d.setDate(d.getDate() + n); return localDate(d); };
         const weekStartOf = ds => { const d = new Date(ds + 'T00:00:00'); d.setDate(d.getDate() - ((d.getDay() + 2) % 7)); return localDate(d); }; // Jumat = awal minggu
         const shortDate = ds => `${parseInt(ds.slice(8))} ${MONTHS[parseInt(ds.slice(5, 7)) - 1]}`;
-        // Setiap minggu (Jumat-Kamis) menjadi milik bulan dari hari Jumat-nya
+        // Minggu Jumat-Kamis, dipotong di pergantian bulan: tanggal awal bulan masuk W1 bulan baru
         function monthWeeks(ym) {
-            const d = new Date(ym + '-01T00:00:00'); while (d.getDay() !== 5) d.setDate(d.getDate() + 1);
-            const weeks = []; let ws = localDate(d);
-            while (ws.slice(0, 7) === ym) { weeks.push({ ws, we: addDays(ws, 6) }); ws = addDays(ws, 7); }
+            const [y, m] = ym.split('-').map(Number), last = new Date(y, m, 0).getDate(), weeks = [];
+            let day = 1;
+            while (day <= last) {
+                const ws = `${ym}-${String(day).padStart(2, '0')}`, dow = new Date(ws + 'T00:00:00').getDay();
+                const endDay = Math.min(last, day + ((4 - dow + 7) % 7)); // sampai hari Kamis berikutnya
+                weeks.push({ ws, we: `${ym}-${String(endDay).padStart(2, '0')}` }); day = endDay + 1;
+            }
             return weeks;
         }
         const pct = (ok, x) => (ok + x) ? Math.round(ok / (ok + x) * 100) + '%' : '-';
@@ -1029,10 +1037,10 @@
             return all;
         }
         async function loadEntries(from, to) {
-            const [d, c] = await Promise.all([fetchRows('daily_reports', 'opl_id, report_date, status', 'report_date', from, to), fetchRows('case_reports', 'opl_id, created_at', 'created_at', from, to + 'T23:59:59')]);
+            const [d, c] = await Promise.all([fetchRows('daily_reports', 'opl_id, report_date, status', 'report_date', from, to), fetchRows('case_reports', 'opl_id, report_date', 'report_date', from, to)]);
             const map = {}, get = id => (map[id] = map[id] || { byDate: {}, cases: [] });
             d.forEach(r => get(r.opl_id).byDate[r.report_date] = r.status);
-            c.forEach(r => get(r.opl_id).cases.push(localDate(r.created_at)));
+            c.forEach(r => get(r.opl_id).cases.push(r.report_date));
             return map;
         }
         // Daftar hari yang dihitung: Done = ☑, Not Done = x, Interval = dilewati, hari tanpa laporan = x (OPL Harian)
@@ -1073,7 +1081,7 @@
             if (token !== rmToken) return;
             const daysOf = o => daysFor(o, map[o.id], from, to, today);
             const dayCache = {}; list.forEach(o => dayCache[o.id] = daysOf(o));
-            const note = `<p class="text-xs text-gray-500 mb-3">Minggu dihitung Jumat-Kamis dan milik bulan dari hari Jumat-nya. ☑ = Done, x = Not Done atau hari tanpa laporan (OPL Harian), Interval tidak dihitung. % = ☑ / (☑ + x). Warna: hijau 100%, kuning ≥ ${KPI_MIN}%, merah di bawahnya. OPL Tanpa Pelaporan tidak ditampilkan. OPL yang ditutup tidak dihitung sejak tanggal penutupan.</p>`;
+            const note = `<p class="text-xs text-gray-500 mb-3">Minggu dihitung Jumat-Kamis. Minggu yang melewati pergantian bulan dipotong: tanggal awal bulan masuk W1 bulan baru, sehingga total bulan = tanggal 1 sampai akhir bulan. ☑ = Done, x = Not Done atau hari tanpa laporan (OPL Harian), Interval tidak dihitung. % = ☑ / (☑ + x). Warna: hijau 100%, kuning ≥ ${KPI_MIN}%, merah di bawahnya. OPL Tanpa Pelaporan tidak ditampilkan. OPL yang ditutup tidak dihitung sejak tanggal penutupan.</p>`;
             const rowHead = o => `<td class="p-2 text-sm"><b>${esc(o.id)}</b> ${esc(o.name)}</td><td class="p-2 text-sm">${esc(o.dept)}</td><td class="p-2 text-xs">${esc(o.reportType)}</td>`;
             if (view === 'day') {
                 const n = parseInt(to.slice(8)), sym = { Done: ['☑', 'bg-green-100 text-green-800'], 'Not Done': ['x', 'bg-red-100 text-red-800'], Interval: ['I', 'bg-gray-200 text-gray-600'], Missing: ['x', 'bg-red-50 text-red-400'] };
@@ -1096,14 +1104,14 @@
                 const head = weeks.map((w, i) => `<th class="p-2 text-center" colspan="3">W${i + 1}<div class="text-xs font-normal">${shortDate(w.ws)}–${shortDate(w.we)}</div></th>`).join('');
                 const sub = weeks.map(() => '<th class="p-1 text-center text-xs">☑</th><th class="p-1 text-center text-xs">x</th><th class="p-1 text-center text-xs">%</th>').join('');
                 const rowFor = days => { let tot = { ok: 0, x: 0 }, cells = '';
-                    weeks.forEach(w => { const t = tally(days, e => weekStartOf(e.date) === w.ws); tot.ok += t.ok; tot.x += t.x; cells += `<td class="p-1 text-center text-sm">${t.ok || ''}</td><td class="p-1 text-center text-sm">${t.x || ''}</td>${pcell(t.ok, t.x)}`; });
+                    weeks.forEach(w => { const t = tally(days, e => e.date >= w.ws && e.date <= w.we); tot.ok += t.ok; tot.x += t.x; cells += `<td class="p-1 text-center text-sm">${t.ok || ''}</td><td class="p-1 text-center text-sm">${t.x || ''}</td>${pcell(t.ok, t.x)}`; });
                     return { cells, tot }; };
                 const rows = list.map(o => { const r = rowFor(dayCache[o.id]); return `<tr class="border-b">${rowHead(o)}${r.cells}${pcell(r.tot.ok, r.tot.x, 'border-l-2')}</tr>`; }).join('');
                 const sum = shownDepts.map(d => { const r = rowFor(list.filter(o => o.dept === d).flatMap(o => dayCache[o.id])); return `<tr class="border-b bg-gray-50 font-bold"><td class="p-2 text-sm" colspan="3">TOTAL ${esc(d)}</td>${r.cells}${pcell(r.tot.ok, r.tot.x, 'border-l-2')}</tr>`; }).join('');
                 body.innerHTML = note + `<table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2" rowspan="2">OPL</th><th class="p-2" rowspan="2">Bagian</th><th class="p-2" rowspan="2">Tipe</th>${head}<th class="p-2 text-center border-l-2" rowspan="2">TOTAL BULAN</th></tr><tr class="bg-gray-100">${sub}</tr></thead><tbody>${rows || '<tr><td class="p-3 text-gray-500" colspan="19">Belum ada OPL yang dimonitor.</td></tr>'}${sum}</tbody></table>`;
                 renderKpi(kpi, from, to, today, list, dayCache, shownDepts);
             } else {
-                const cellsFor = days => { let tot = { ok: 0, x: 0 }, c = ''; for (let m = 1; m <= 12; m++) { const p = `${year}-${String(m).padStart(2, '0')}`, t = tally(days, e => weekStartOf(e.date).slice(0, 7) === p); tot.ok += t.ok; tot.x += t.x; c += pcell(t.ok, t.x); } return c + pcell(tot.ok, tot.x, 'border-l-2'); };
+                const cellsFor = days => { let tot = { ok: 0, x: 0 }, c = ''; for (let m = 1; m <= 12; m++) { const p = `${year}-${String(m).padStart(2, '0')}`, t = tally(days, e => e.date.slice(0, 7) === p); tot.ok += t.ok; tot.x += t.x; c += pcell(t.ok, t.x); } return c + pcell(tot.ok, tot.x, 'border-l-2'); };
                 const rows = list.map(o => `<tr class="border-b">${rowHead(o)}${cellsFor(dayCache[o.id])}</tr>`).join('');
                 const sum = shownDepts.map(d => `<tr class="border-b bg-gray-50 font-bold"><td class="p-2 text-sm" colspan="3">TOTAL ${esc(d)}</td>${cellsFor(list.filter(o => o.dept === d).flatMap(o => dayCache[o.id]))}</tr>`).join('');
                 body.innerHTML = note + `<table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2">OPL</th><th class="p-2">Bagian</th><th class="p-2">Tipe</th>${MONTHS.map(m => `<th class="p-2 text-center">${m}</th>`).join('')}<th class="p-2 text-center border-l-2">TOTAL ${year}</th></tr></thead><tbody>${rows || '<tr><td class="p-3 text-gray-500" colspan="16">Belum ada OPL yang dimonitor.</td></tr>'}${sum}</tbody></table>`;
@@ -1316,6 +1324,59 @@
             document.getElementById('audit-verifier-title').value = currentUser.jabatan || '';
             document.getElementById('audit-opl-select').onchange = e => { const o = opls.find(x => x.id === e.target.value); if (o) { document.getElementById('audit-dept-select').value = o.dept; fillPic(); } };
             document.getElementById('audit-dept-select').onchange = fillPic;
+        };
+
+        // ---------- Pelaporan: satu halaman ----------
+        function switchReportTab() { document.getElementById('report-harian').classList.remove('hidden'); document.getElementById('report-kasus').classList.remove('hidden'); }
+
+        // ---------- Pelaporan Kasus: tanggal dan edit (Admin) ----------
+        async function submitCaseReport() {
+            const oplId = document.getElementById('kasus-opl-select').value, desc = document.getElementById('kasus-desc').value.trim();
+            if (!oplId) return alert('Pilih OPL Kasus terlebih dahulu!');
+            const today = localDate(new Date()), dateEl = document.getElementById('kasus-date');
+            const date = currentUser.role === 'Admin' && dateEl && dateEl.value ? dateEl.value : today, isPast = date < today;
+            if (date > today) return alert('Tanggal laporan tidak boleh di masa depan.');
+            const hasFile = document.getElementById('kasus-img').files.length > 0;
+            if (!hasFile && !isPast) return alert("GAGAL: Laporan kasus wajib diattach foto bukti!");
+            if (isPast && !confirm(`Anda akan menyimpan laporan kasus tanggal ${date}. Lanjutkan?`)) return;
+            let image = null; try { image = await uploadFile('kasus-img', 'kasus'); } catch (e) { return alert('Gagal upload foto: ' + (e.message || e)); }
+            const { error } = await sb.from('case_reports').insert({ opl_id: oplId, description: desc, image_url: image, reported_by: currentUser.id, report_date: date });
+            if (error) return alert('Gagal menyimpan laporan: ' + error.message);
+            alert(`Laporan kasus untuk ${oplId} tanggal ${date} berhasil disimpan.`);
+            document.getElementById('kasus-desc').value = ''; document.getElementById('kasus-img').value = '';
+            if (currentUser.role === 'Admin') loadCaseReports();
+        }
+        let caseRows = [], caseEditId = null;
+        async function loadCaseReports() {
+            const el = document.getElementById('kasus-admin-list'); if (!el) return;
+            const { data, error } = await sb.from('case_reports').select('id, opl_id, report_date, description, image_url').order('report_date', { ascending: false }).order('id', { ascending: false }).limit(50);
+            if (error) { el.innerHTML = '<p class="text-red-600 text-sm">Gagal memuat riwayat: ' + esc(error.message) + '</p>'; return; }
+            caseRows = data;
+            el.innerHTML = `<h4 class="font-bold mb-2">Riwayat Laporan Kasus <span class="text-xs font-normal text-gray-500">(50 terbaru, Admin dapat mengedit)</span></h4><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2">Tanggal</th><th class="p-2">OPL</th><th class="p-2">Deskripsi</th><th class="p-2">Foto</th><th class="p-2"></th></tr></thead><tbody>${data.map(r => { const o = opls.find(x => x.id === r.opl_id) || {};
+                return `<tr class="border-b"><td class="p-2 text-sm whitespace-nowrap">${fmtDate(r.report_date)}</td><td class="p-2 text-sm"><b>${esc(r.opl_id)}</b> ${esc(o.name || '')}</td><td class="p-2 text-sm">${esc(r.description || '')}</td><td class="p-2">${thumbHtml(r.image_url)}</td><td class="p-2"><button onclick="editCase(${r.id})" class="text-blue-600 hover:underline text-sm"><i class="fas fa-pen mr-1"></i>Edit</button></td></tr>`; }).join('') || '<tr><td class="p-3 text-gray-500" colspan="5">Belum ada laporan kasus.</td></tr>'}</tbody></table>`;
+        }
+        function editCase(id) {
+            if (currentUser.role !== 'Admin') return alert('Hanya Admin yang dapat mengedit laporan kasus.');
+            const r = caseRows.find(x => x.id === id); if (!r) return; caseEditId = id;
+            document.getElementById('ce-opl').innerHTML = opls.filter(o => o.reportType === 'Kasus' && (o.status !== 'CLOSED' || o.id === r.opl_id)).map(o => `<option value="${esc(o.id)}">${esc(o.id)} - ${esc(o.name)}</option>`).join('');
+            document.getElementById('ce-opl').value = r.opl_id; document.getElementById('ce-date').value = r.report_date; document.getElementById('ce-desc').value = r.description || '';
+            showModal('modal-case-edit');
+        }
+        async function saveCaseEdit() {
+            const date = document.getElementById('ce-date').value, opl = document.getElementById('ce-opl').value;
+            if (!date || !opl) return alert('OPL dan tanggal wajib diisi.'); if (date > localDate(new Date())) return alert('Tanggal laporan tidak boleh di masa depan.');
+            const { error } = await sb.from('case_reports').update({ opl_id: opl, report_date: date, description: document.getElementById('ce-desc').value.trim() }).eq('id', caseEditId);
+            if (error) return alert('Gagal menyimpan: ' + error.message);
+            hideModal('modal-case-edit'); loadCaseReports(); alert('Laporan kasus diperbarui.');
+        }
+        const _renderReporting2 = renderReporting;
+        renderReporting = function () {
+            _renderReporting2();
+            if (currentUser.role !== 'Admin') return;
+            const today = localDate(new Date());
+            if (!document.getElementById('kasus-date-wrap')) document.getElementById('kasus-desc').parentElement.insertAdjacentHTML('afterend', `<div id="kasus-date-wrap" class="mb-4 bg-yellow-50 border border-yellow-300 p-3 rounded"><div class="flex flex-wrap items-center gap-3"><label class="text-sm font-bold">Tanggal laporan (Admin)</label><input type="date" id="kasus-date" max="${today}" value="${today}" class="keep-read border p-1 rounded"></div><p class="text-xs text-gray-600 mt-1">Untuk laporan yang tertinggal. Hanya Admin yang dapat memilih tanggal sebelumnya; bagian lain otomatis memakai tanggal hari ini. Foto bukti tidak wajib untuk tanggal sebelumnya.</p></div>`);
+            if (!document.getElementById('kasus-admin-list')) document.getElementById('report-kasus').insertAdjacentHTML('beforeend', '<div id="kasus-admin-list" class="bg-white p-6 rounded-lg shadow mt-4 overflow-x-auto"></div>');
+            loadCaseReports();
         };
     </script>
 </body>
