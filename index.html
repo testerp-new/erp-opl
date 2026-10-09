@@ -74,7 +74,7 @@
                 <button onclick="showSection('master-setting')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-sliders mr-2"></i> Pengaturan KPI</button>
             </nav>
             <div class="p-4 border-t border-gray-700">
-                <div class="text-xs text-gray-500 px-3 py-1">Versi 9 Okt 2026 (f): pelaporan per Kasus = Done/Not Done/Interval</div>
+                <div class="text-xs text-gray-500 px-3 py-1">Versi 9 Okt 2026 (h): per Kasus tanpa laporan dianggap -</div>
                 <button onclick="handleLogout()" class="w-full text-left py-2 px-3 rounded hover:bg-red-600 text-red-400"><i class="fas fa-sign-out-alt mr-2"></i> Logout</button>
             </div>
         </div>
@@ -170,7 +170,7 @@
 
                     <!-- Tab Kasus -->
                     <div id="report-kasus" class="fade-in mt-8"><h4 class="font-bold text-purple-800 mb-3"><i class="fas fa-exclamation-circle mr-2"></i> Pelaporan per Kasus</h4>
-                        <p class="text-sm text-gray-500 mb-3">Untuk OPL bertipe Per Kasus: pilih Done atau Not Done pada hari ada kasus / ganti job, atau Interval jika tidak ada kasus hari itu.</p>
+                        <p class="text-sm text-gray-500 mb-3">Untuk OPL bertipe Per Kasus: pilih Done atau Not Done pada hari ada kasus / ganti job, atau Interval jika tidak ada kasus hari itu. OPL yang statusnya belum dipilih tidak disimpan dan dianggap - (tidak dihitung di rekap).</p>
                         <div id="kasus-checklist" class="space-y-4"></div>
                         <button class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" onclick="saveDailyReport('kasus')"><i class="fas fa-save mr-2"></i> Simpan Laporan per Kasus</button>
                     </div>
@@ -643,21 +643,23 @@
             const date = currentUser.role === 'Admin' && dateEl && dateEl.value ? dateEl.value : today, isPast = date < today;
             if (date > today) return alert('Tanggal laporan tidak boleh di masa depan.');
             const statusOf = opl => document.getElementById(`report-status-${opl.id}`).value;
-            for (let opl of harianOpls) {
+            const chosen = harianOpls.filter(o => statusOf(o) !== '');
+            if (!chosen.length) return alert('Belum ada OPL yang dipilih statusnya.');
+            for (let opl of chosen) {
                 const fi = document.getElementById(`report-img-${opl.id}`);
                 if (!isPast && statusOf(opl) !== 'Interval' && (!fi.files || fi.files.length === 0)) return alert("GAGAL SIMPAN: Semua pelaporan harian wajib diattach foto bukti (kecuali yang dipilih Interval)!");
             }
             if (isPast && !confirm(`Anda akan menyimpan/mengoreksi laporan tanggal ${date}. Lanjutkan?`)) return;
             const rows = [];
             try {
-                for (let opl of harianOpls) {
+                for (let opl of chosen) {
                     const st = statusOf(opl), fi = document.getElementById(`report-img-${opl.id}`);
                     let img = null;
                     if (st !== 'Interval') img = (fi.files && fi.files.length) ? await uploadFile(`report-img-${opl.id}`, 'harian') : ((repExisting[opl.id] || {}).image_url || null);
                     rows.push({ opl_id: opl.id, report_date: date, status: st, image_url: img, reported_by: currentUser.id, corrected_by: isPast ? currentUser.id : null, corrected_at: isPast ? new Date().toISOString() : null });
                 }
             } catch (e) { return alert('Gagal upload foto: ' + (e.message || e)); }
-            if (!rows.length) return alert('Tidak ada OPL untuk dilaporkan.');
+            if (!rows.length) return alert('Belum ada OPL yang dipilih statusnya.');
             const { error } = await sb.from('daily_reports').upsert(rows, { onConflict: 'opl_id,report_date' });
             if (error) return alert('Gagal menyimpan laporan: ' + error.message);
             alert(isPast ? `Koreksi laporan tanggal ${date} berhasil disimpan.` : (kind === 'kasus' ? "Laporan per Kasus berhasil disimpan!" : "Laporan harian berhasil disimpan!"));
@@ -1015,7 +1017,7 @@
                 if (st === 'Interval') continue;
                 if (st === 'Done') out.push({ date: d, ok: true });
                 else if (st === 'Not Done') out.push({ date: d, ok: false });
-                else if (d >= o.start && d < today) out.push({ date: d, ok: false });
+                else if (d >= o.start && d < today && o.reportType !== 'Kasus') out.push({ date: d, ok: false });
             }
             return out;
         }
@@ -1043,7 +1045,7 @@
             if (token !== rmToken) return;
             const daysOf = o => daysFor(o, map[o.id], from, to, today);
             const dayCache = {}; list.forEach(o => dayCache[o.id] = daysOf(o));
-            const note = `<p class="text-xs text-gray-500 mb-3">Minggu dihitung Jumat-Kamis. Minggu yang melewati pergantian bulan dipotong: tanggal awal bulan masuk W1 bulan baru, sehingga total bulan = tanggal 1 sampai akhir bulan. ☑ = Done, x = Not Done atau hari tanpa laporan (OPL Harian dan per Kasus), Interval tidak dihitung. % = ☑ / (☑ + x). Warna: hijau 100%, kuning ≥ ${KPI_MIN}%, merah di bawahnya. OPL Tanpa Pelaporan tidak ditampilkan. OPL yang ditutup tidak dihitung sejak tanggal penutupan.</p>`;
+            const note = `<p class="text-xs text-gray-500 mb-3">Minggu dihitung Jumat-Kamis. Minggu yang melewati pergantian bulan dipotong: tanggal awal bulan masuk W1 bulan baru, sehingga total bulan = tanggal 1 sampai akhir bulan. ☑ = Done, x = Not Done atau hari tanpa laporan (khusus OPL Harian). OPL per Kasus yang tidak dipilih statusnya dianggap - (tidak dihitung), Interval juga tidak dihitung. % = ☑ / (☑ + x). Warna: hijau 100%, kuning ≥ ${KPI_MIN}%, merah di bawahnya. OPL Tanpa Pelaporan tidak ditampilkan. OPL yang ditutup tidak dihitung sejak tanggal penutupan.</p>`;
             const rowHead = o => `<td class="p-2 text-sm"><b>${esc(o.id)}</b> ${esc(o.name)}</td><td class="p-2 text-sm">${esc(o.dept)}</td><td class="p-2 text-xs">${esc(typeLabel(o.reportType))}</td>`;
             if (view === 'day') {
                 const n = parseInt(to.slice(8)), sym = { Done: ['☑', 'bg-green-100 text-green-800'], 'Not Done': ['x', 'bg-red-100 text-red-800'], Interval: ['I', 'bg-gray-200 text-gray-600'], Missing: ['x', 'bg-red-50 text-red-400'] };
@@ -1052,13 +1054,13 @@
                     const ent = map[o.id] || { byDate: {}, cases: [] }; let ok = 0, x = 0, cells = '';
                     for (let i = 1; i <= n; i++) {
                         const d = `${ym}-${pad2(i)}`; let st = '';
-                        if (d <= today && !(o.closedDate && d >= o.closedDate)) st = ent.byDate[d] || (d >= o.start && d < today ? 'Missing' : '');
+                        if (d <= today && !(o.closedDate && d >= o.closedDate)) st = ent.byDate[d] || (d >= o.start && d < today && o.reportType !== 'Kasus' ? 'Missing' : '');
                         if (st === 'Done') ok++; else if (st === 'Not Done' || st === 'Missing') x++;
                         const v = sym[st]; cells += `<td class="p-0.5 text-center"><span class="inline-block w-6 rounded text-xs font-bold ${v ? v[1] : 'text-gray-300'}" ${st === 'Missing' ? 'title="Tidak ada laporan (dihitung x)"' : ''}>${v ? v[0] : '·'}</span></td>`;
                     }
                     return `<tr class="border-b">${rowHead(o)}${cells}<td class="p-2 text-center text-sm border-l-2">${ok}</td><td class="p-2 text-center text-sm">${x}</td>${pcell(ok, x)}</tr>`;
                 }).join('');
-                body.innerHTML = `<p class="text-xs text-gray-500 mb-3">☑ = Done, x merah = Not Done, x pucat = tidak ada laporan (dihitung x), I = Interval (tidak dihitung), · = belum ada / di luar periode. Hari ini baru dihitung x setelah harinya lewat. Kolom abu-abu = Sabtu dan Minggu.</p><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2">OPL</th><th class="p-2">Bagian</th><th class="p-2">Tipe</th>${head}<th class="p-2 text-center border-l-2">☑</th><th class="p-2 text-center">x</th><th class="p-2 text-center">%</th></tr></thead><tbody>${rows || '<tr><td class="p-3 text-gray-500" colspan="40">Belum ada OPL yang dimonitor.</td></tr>'}</tbody></table>`;
+                body.innerHTML = `<p class="text-xs text-gray-500 mb-3">☑ = Done, x merah = Not Done, x pucat = tidak ada laporan (dihitung x), I = Interval (tidak dihitung), · = belum ada laporan / di luar periode (OPL per Kasus tanpa laporan dianggap -). Hari ini baru dihitung x setelah harinya lewat. Kolom abu-abu = Sabtu dan Minggu.</p><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2">OPL</th><th class="p-2">Bagian</th><th class="p-2">Tipe</th>${head}<th class="p-2 text-center border-l-2">☑</th><th class="p-2 text-center">x</th><th class="p-2 text-center">%</th></tr></thead><tbody>${rows || '<tr><td class="p-3 text-gray-500" colspan="40">Belum ada OPL yang dimonitor.</td></tr>'}</tbody></table>`;
                 return;
             }
             if (view === 'week') {
@@ -1297,7 +1299,7 @@
                 <div class="bg-white p-4 rounded-lg shadow border-l-4 border-purple-500">
                     <div class="flex justify-between items-start mb-3">
                         <div><h4 class="font-bold text-purple-800">${esc(opl.id)} - ${esc(opl.name)}</h4><p class="text-sm text-gray-500">${esc(opl.case)}</p></div>
-                        <select id="report-status-${esc(opl.id)}" class="border p-1 rounded text-sm bg-green-50"><option value="Done">Done (☑)</option><option value="Not Done">Not Done (x)</option><option value="Interval" selected>Interval (tidak ada kasus / tidak perlu lapor)</option></select>
+                        <select id="report-status-${esc(opl.id)}" class="border p-1 rounded text-sm bg-green-50"><option value="" selected>-- Pilih status --</option><option value="Done">Done (☑)</option><option value="Not Done">Not Done (x)</option><option value="Interval">Interval (tidak ada kasus / tidak perlu lapor)</option></select>
                     </div>
                     <div class="bg-gray-50 p-3 rounded border border-dashed border-gray-300">
                         <label class="block text-xs font-bold text-red-600 mb-1"><i class="fas fa-camera mr-1"></i> Wajib Upload Bukti Pelaporan (kecuali dipilih Interval)</label>
