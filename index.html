@@ -1039,12 +1039,12 @@
             const out = []; ent = ent || { byDate: {}, cases: [] };
             if (o.reportType === 'Kasus') { ent.cases.filter(d => d >= from && d <= to && !(o.closedDate && d >= o.closedDate)).forEach(d => out.push({ date: d, ok: true })); return out; }
             const start = o.start > from ? o.start : from; let end = to < today ? to : today; if (o.closedDate && addDays(o.closedDate, -1) < end) end = addDays(o.closedDate, -1);
-            for (let d = start; d <= end; d = addDays(d, 1)) {
+            for (let d = from; d <= end; d = addDays(d, 1)) {
                 const st = ent.byDate[d];
                 if (st === 'Interval') continue;
                 if (st === 'Done') out.push({ date: d, ok: true });
                 else if (st === 'Not Done') out.push({ date: d, ok: false });
-                else if (d < today) out.push({ date: d, ok: false });
+                else if (d >= o.start && d < today) out.push({ date: d, ok: false });
             }
             return out;
         }
@@ -1082,7 +1082,7 @@
                     for (let i = 1; i <= n; i++) {
                         const d = `${ym}-${pad2(i)}`; let st = '';
                         if (o.reportType === 'Kasus') { if (ent.cases.includes(d)) st = 'Done'; }
-                        else if (d >= o.start && d <= today && !(o.closedDate && d >= o.closedDate)) st = ent.byDate[d] || (d < today ? 'Missing' : '');
+                        else if (d <= today && !(o.closedDate && d >= o.closedDate)) st = ent.byDate[d] || (d >= o.start && d < today ? 'Missing' : '');
                         if (st === 'Done') ok++; else if (st === 'Not Done' || st === 'Missing') x++;
                         const v = sym[st]; cells += `<td class="p-0.5 text-center"><span class="inline-block w-6 rounded text-xs font-bold ${v ? v[1] : 'text-gray-300'}" ${st === 'Missing' ? 'title="Tidak ada laporan (dihitung x)"' : ''}>${v ? v[0] : '·'}</span></td>`;
                     }
