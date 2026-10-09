@@ -74,7 +74,7 @@
                 <button onclick="showSection('master-setting')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-sliders mr-2"></i> Pengaturan KPI</button>
             </nav>
             <div class="p-4 border-t border-gray-700">
-                <div class="text-xs text-gray-500 px-3 py-1">Versi 9 Okt 2026 (e): minggu Jumat-Kamis dipotong per bulan; pelaporan satu halaman</div>
+                <div class="text-xs text-gray-500 px-3 py-1">Versi 9 Okt 2026 (f): pelaporan per Kasus = Done/Not Done/Interval</div>
                 <button onclick="handleLogout()" class="w-full text-left py-2 px-3 rounded hover:bg-red-600 text-red-400"><i class="fas fa-sign-out-alt mr-2"></i> Logout</button>
             </div>
         </div>
@@ -169,19 +169,10 @@
                     </div>
 
                     <!-- Tab Kasus -->
-                    <div id="report-kasus" class="fade-in mt-8"><h4 class="font-bold text-purple-800 mb-3"><i class="fas fa-exclamation-circle mr-2"></i> Pelaporan Kasus</h4>
-                        <div class="bg-white p-6 rounded-lg shadow">
-                            <h4 class="font-bold mb-3 text-yellow-700"><i class="fas fa-exclamation-triangle mr-2"></i> Laporan ini hanya untuk OPL bertipe "Khusus Kasus"</h4>
-                            <div class="grid grid-cols-2 gap-4 mb-4">
-                                <select id="kasus-opl-select" class="border p-2 rounded w-full"></select>
-                                <input type="text" id="kasus-desc" class="border p-2 rounded w-full" placeholder="Deskripsi Kasus / Temuan Khusus">
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-sm font-bold mb-1 text-red-600"><i class="fas fa-camera mr-1"></i> Wajib Upload Bukti Gambar Kasus</label>
-                                <input type="file" id="kasus-img" accept="image/*" capture="environment" class="w-full border p-2 rounded">
-                            </div>
-                            <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" onclick="submitCaseReport()"><i class="fas fa-paper-plane mr-2"></i> Kirim Laporan Kasus</button>
-                        </div>
+                    <div id="report-kasus" class="fade-in mt-8"><h4 class="font-bold text-purple-800 mb-3"><i class="fas fa-exclamation-circle mr-2"></i> Pelaporan per Kasus</h4>
+                        <p class="text-sm text-gray-500 mb-3">Untuk OPL bertipe Per Kasus: pilih Done atau Not Done pada hari ada kasus / ganti job, atau Interval jika tidak ada kasus hari itu.</p>
+                        <div id="kasus-checklist" class="space-y-4"></div>
+                        <button class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" onclick="saveDailyReport('kasus')"><i class="fas fa-save mr-2"></i> Simpan Laporan per Kasus</button>
                     </div>
                 </div>
 
@@ -310,7 +301,7 @@
             <label class="block text-sm font-bold mb-1">Case</label><input id="oe-case" class="w-full border p-2 rounded mb-2">
             <label class="block text-sm font-bold mb-1">Nama OPL</label><input id="oe-name" class="w-full border p-2 rounded mb-2">
             <label class="block text-sm font-bold mb-1">Bagian</label><select id="oe-dept" class="w-full border p-2 rounded mb-2 dept-select"></select>
-            <label class="block text-sm font-bold mb-1">Tipe Lapor</label><select id="oe-type" class="w-full border p-2 rounded mb-2"><option value="Harian">Harian</option><option value="Kasus">Khusus Kasus</option><option value="Info">Tanpa Pelaporan</option></select>
+            <label class="block text-sm font-bold mb-1">Tipe Lapor</label><select id="oe-type" class="w-full border p-2 rounded mb-2"><option value="Harian">Harian</option><option value="Kasus">Per Kasus</option><option value="Info">Tanpa Pelaporan</option></select>
             <label class="block text-sm font-bold mb-1">Tanggal OPL Dibuat / Berlaku</label><input type="date" id="oe-created" class="w-full border p-2 rounded mb-2">
             <label class="block text-sm font-bold mb-1">Tanggal Expired</label><input type="date" id="oe-expiry" class="w-full border p-2 rounded mb-2">
             <label class="block text-sm font-bold mb-1">Ganti File OPL <span class="font-normal text-gray-500">(opsional, gambar atau PDF)</span></label><input type="file" id="oe-file" accept="image/*,application/pdf" class="w-full border p-2 rounded mb-4">
@@ -327,17 +318,6 @@
             <label class="block text-sm font-bold mb-1">Tanggal Penutupan</label><input type="date" id="oc-date" class="w-full border p-2 rounded mb-2">
             <label class="block text-sm font-bold mb-1">Catatan</label><textarea id="oc-note" rows="2" class="w-full border p-2 rounded mb-4"></textarea>
             <div class="flex justify-end space-x-2"><button onclick="hideModal('modal-opl-close')" class="px-4 py-2 bg-gray-300 rounded">Batal</button><button onclick="saveOplClose()" class="px-4 py-2 bg-red-600 text-white rounded">Tutup OPL</button></div>
-        </div>
-    </div>
-
-    <!-- Modal Edit Laporan Kasus (Admin) -->
-    <div id="modal-case-edit" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-lg w-[30rem] max-w-[95vw] shadow-2xl">
-            <h3 class="text-xl font-bold mb-3">Edit Laporan Kasus</h3>
-            <label class="block text-sm font-bold mb-1">OPL Kasus</label><select id="ce-opl" class="w-full border p-2 rounded mb-2"></select>
-            <label class="block text-sm font-bold mb-1">Tanggal Laporan</label><input type="date" id="ce-date" class="w-full border p-2 rounded mb-2">
-            <label class="block text-sm font-bold mb-1">Deskripsi</label><textarea id="ce-desc" rows="3" class="w-full border p-2 rounded mb-4"></textarea>
-            <div class="flex justify-end space-x-2"><button onclick="hideModal('modal-case-edit')" class="px-4 py-2 bg-gray-300 rounded">Batal</button><button onclick="saveCaseEdit()" class="px-4 py-2 bg-blue-600 text-white rounded">Simpan</button></div>
         </div>
     </div>
 
@@ -382,7 +362,7 @@
                 <label class="block text-sm font-bold mb-1">Tipe Pelaporan OPL:</label>
                 <select id="trigger-report-type" class="w-full border p-2 rounded bg-blue-50 font-bold text-blue-800">
                     <option value="Harian">Harian (Wajib lapor setiap hari/shift)</option>
-                    <option value="Kasus">Khusus Kasus (Hanya lapor jika terjadi masalah/temuan)</option>
+                    <option value="Kasus">Per Kasus (dilaporkan setiap ada kasus / ganti job: Done, Not Done, atau Interval)</option>
                     <option value="Info">Tanpa Pelaporan (hanya upload OPL, bagian terkait cukup membaca)</option>
                 </select>
             </div>
@@ -634,10 +614,7 @@
             });
             document.getElementById('daily-checklist').innerHTML = dHtml || '<p class="text-gray-500 italic">Tidak ada OPL dengan tipe Harian untuk bagian Anda.</p>';
 
-            // Render Tab Kasus
-            let cHtml = '<option value="">-- Pilih OPL Kasus --</option>';
-            kasusOpls.forEach(opl => { cHtml += `<option value="${opl.id}">${opl.id} - ${opl.name}</option>`; });
-            document.getElementById('kasus-opl-select').innerHTML = cHtml;
+            renderKasusCards(kasusOpls);
 
             switchReportTab(activeReportTab);
         }
@@ -655,13 +632,13 @@
             _renderReporting();
             const box = document.getElementById('daily-checklist');
             if (currentUser.role === 'Admin' && !document.getElementById('rep-date-wrap')) {
-                box.insertAdjacentHTML('beforebegin', `<div id="rep-date-wrap" class="mb-4 bg-yellow-50 border border-yellow-300 p-3 rounded"><div class="flex flex-wrap items-center gap-3"><label class="text-sm font-bold">Tanggal laporan (koreksi Admin)</label><input type="date" id="rep-date" max="${localDate(new Date())}" value="${localDate(new Date())}" onchange="loadReportDate()" class="keep-read border p-1 rounded"></div><p class="text-xs text-gray-600 mt-1">Hanya Admin yang dapat mengisi atau mengoreksi tanggal sebelumnya. Koreksi tercatat (siapa dan kapan). Foto bukti tidak wajib untuk tanggal sebelumnya.</p><p id="rep-date-info" class="text-xs text-gray-600"></p></div>`);
+                box.insertAdjacentHTML('beforebegin', `<div id="rep-date-wrap" class="mb-4 bg-yellow-50 border border-yellow-300 p-3 rounded"><div class="flex flex-wrap items-center gap-3"><label class="text-sm font-bold">Tanggal laporan (koreksi Admin, berlaku untuk Harian dan per Kasus)</label><input type="date" id="rep-date" max="${localDate(new Date())}" value="${localDate(new Date())}" onchange="loadReportDate()" class="keep-read border p-1 rounded"></div><p class="text-xs text-gray-600 mt-1">Hanya Admin yang dapat mengisi atau mengoreksi tanggal sebelumnya. Koreksi tercatat (siapa dan kapan). Foto bukti tidak wajib untuk tanggal sebelumnya.</p><p id="rep-date-info" class="text-xs text-gray-600"></p></div>`);
             }
             repExisting = {}; if (currentUser.role === 'Admin') loadReportDate();
         };
-        async function saveDailyReport() {
+        async function saveDailyReport(kind) {
             const myOpls = (currentUser.dept === 'ALL' ? opls : opls.filter(o => o.dept === currentUser.dept)).filter(o => o.status !== 'CLOSED');
-            const harianOpls = myOpls.filter(o => o.reportType === 'Harian');
+            const harianOpls = myOpls.filter(o => o.reportType === (kind === 'kasus' ? 'Kasus' : 'Harian'));
             const today = localDate(new Date()), dateEl = document.getElementById('rep-date');
             const date = currentUser.role === 'Admin' && dateEl && dateEl.value ? dateEl.value : today, isPast = date < today;
             if (date > today) return alert('Tanggal laporan tidak boleh di masa depan.');
@@ -680,23 +657,11 @@
                     rows.push({ opl_id: opl.id, report_date: date, status: st, image_url: img, reported_by: currentUser.id, corrected_by: isPast ? currentUser.id : null, corrected_at: isPast ? new Date().toISOString() : null });
                 }
             } catch (e) { return alert('Gagal upload foto: ' + (e.message || e)); }
-            if (!rows.length) return alert('Tidak ada OPL Harian untuk dilaporkan.');
+            if (!rows.length) return alert('Tidak ada OPL untuk dilaporkan.');
             const { error } = await sb.from('daily_reports').upsert(rows, { onConflict: 'opl_id,report_date' });
             if (error) return alert('Gagal menyimpan laporan: ' + error.message);
-            alert(isPast ? `Koreksi laporan tanggal ${date} berhasil disimpan.` : "Laporan harian berhasil disimpan!");
+            alert(isPast ? `Koreksi laporan tanggal ${date} berhasil disimpan.` : (kind === 'kasus' ? "Laporan per Kasus berhasil disimpan!" : "Laporan harian berhasil disimpan!"));
             if (currentUser.role === 'Admin') loadReportDate();
-        }
-
-        async function submitCaseReport() {
-            const oplId = document.getElementById('kasus-opl-select').value;
-            const desc = document.getElementById('kasus-desc').value;
-            if (!oplId) return alert('Pilih OPL Kasus terlebih dahulu!');
-            const fileInput = document.getElementById('kasus-img');
-            if (!fileInput.files || fileInput.files.length === 0) return alert("GAGAL: Laporan kasus wajib diattach foto bukti!");
-            let image; try { image = await uploadFile('kasus-img', 'kasus'); } catch (e) { return alert('Gagal upload foto: ' + (e.message || e)); }
-            const { error } = await sb.from('case_reports').insert({ opl_id: oplId, description: desc, image_url: image, reported_by: currentUser.id });
-            if (error) return alert('Gagal menyimpan laporan: ' + error.message);
-            alert(`Laporan kasus untuk ${oplId} berhasil dikirim! Deskripsi: ${desc}`);
         }
 
         // --- AUDIT ---
@@ -993,7 +958,7 @@
         }
 
         // --- TIPE OPL ---
-        const typeLabel = t => t === 'Info' ? 'Tanpa Pelaporan' : t;
+        const typeLabel = t => t === 'Info' ? 'Tanpa Pelaporan' : (t === 'Kasus' ? 'Per Kasus' : t);
         const typeCls = t => t === 'Harian' ? 'bg-green-100 text-green-800' : (t === 'Info' ? 'bg-gray-200 text-gray-700' : 'bg-purple-100 text-purple-800');
 
         // --- PENGATURAN KPI ---
@@ -1037,16 +1002,13 @@
             return all;
         }
         async function loadEntries(from, to) {
-            const [d, c] = await Promise.all([fetchRows('daily_reports', 'opl_id, report_date, status', 'report_date', from, to), fetchRows('case_reports', 'opl_id, report_date', 'report_date', from, to)]);
-            const map = {}, get = id => (map[id] = map[id] || { byDate: {}, cases: [] });
-            d.forEach(r => get(r.opl_id).byDate[r.report_date] = r.status);
-            c.forEach(r => get(r.opl_id).cases.push(r.report_date));
+            const d = await fetchRows('daily_reports', 'opl_id, report_date, status', 'report_date', from, to), map = {};
+            d.forEach(r => (map[r.opl_id] = map[r.opl_id] || { byDate: {}, cases: [] }).byDate[r.report_date] = r.status);
             return map;
         }
         // Daftar hari yang dihitung: Done = ☑, Not Done = x, Interval = dilewati, hari tanpa laporan = x (OPL Harian)
         function daysFor(o, ent, from, to, today) {
             const out = []; ent = ent || { byDate: {}, cases: [] };
-            if (o.reportType === 'Kasus') { ent.cases.filter(d => d >= from && d <= to && !(o.closedDate && d >= o.closedDate)).forEach(d => out.push({ date: d, ok: true })); return out; }
             const start = o.start > from ? o.start : from; let end = to < today ? to : today; if (o.closedDate && addDays(o.closedDate, -1) < end) end = addDays(o.closedDate, -1);
             for (let d = from; d <= end; d = addDays(d, 1)) {
                 const st = ent.byDate[d];
@@ -1081,8 +1043,8 @@
             if (token !== rmToken) return;
             const daysOf = o => daysFor(o, map[o.id], from, to, today);
             const dayCache = {}; list.forEach(o => dayCache[o.id] = daysOf(o));
-            const note = `<p class="text-xs text-gray-500 mb-3">Minggu dihitung Jumat-Kamis. Minggu yang melewati pergantian bulan dipotong: tanggal awal bulan masuk W1 bulan baru, sehingga total bulan = tanggal 1 sampai akhir bulan. ☑ = Done, x = Not Done atau hari tanpa laporan (OPL Harian), Interval tidak dihitung. % = ☑ / (☑ + x). Warna: hijau 100%, kuning ≥ ${KPI_MIN}%, merah di bawahnya. OPL Tanpa Pelaporan tidak ditampilkan. OPL yang ditutup tidak dihitung sejak tanggal penutupan.</p>`;
-            const rowHead = o => `<td class="p-2 text-sm"><b>${esc(o.id)}</b> ${esc(o.name)}</td><td class="p-2 text-sm">${esc(o.dept)}</td><td class="p-2 text-xs">${esc(o.reportType)}</td>`;
+            const note = `<p class="text-xs text-gray-500 mb-3">Minggu dihitung Jumat-Kamis. Minggu yang melewati pergantian bulan dipotong: tanggal awal bulan masuk W1 bulan baru, sehingga total bulan = tanggal 1 sampai akhir bulan. ☑ = Done, x = Not Done atau hari tanpa laporan (OPL Harian dan per Kasus), Interval tidak dihitung. % = ☑ / (☑ + x). Warna: hijau 100%, kuning ≥ ${KPI_MIN}%, merah di bawahnya. OPL Tanpa Pelaporan tidak ditampilkan. OPL yang ditutup tidak dihitung sejak tanggal penutupan.</p>`;
+            const rowHead = o => `<td class="p-2 text-sm"><b>${esc(o.id)}</b> ${esc(o.name)}</td><td class="p-2 text-sm">${esc(o.dept)}</td><td class="p-2 text-xs">${esc(typeLabel(o.reportType))}</td>`;
             if (view === 'day') {
                 const n = parseInt(to.slice(8)), sym = { Done: ['☑', 'bg-green-100 text-green-800'], 'Not Done': ['x', 'bg-red-100 text-red-800'], Interval: ['I', 'bg-gray-200 text-gray-600'], Missing: ['x', 'bg-red-50 text-red-400'] };
                 const head = Array.from({ length: n }, (_, i) => { const dow = new Date(`${ym}-${pad2(i + 1)}T00:00:00`).getDay(); return `<th class="p-1 text-center text-xs ${dow === 0 || dow === 6 ? 'bg-gray-300' : ''}">${i + 1}</th>`; }).join('');
@@ -1090,8 +1052,7 @@
                     const ent = map[o.id] || { byDate: {}, cases: [] }; let ok = 0, x = 0, cells = '';
                     for (let i = 1; i <= n; i++) {
                         const d = `${ym}-${pad2(i)}`; let st = '';
-                        if (o.reportType === 'Kasus') { if (ent.cases.includes(d)) st = 'Done'; }
-                        else if (d <= today && !(o.closedDate && d >= o.closedDate)) st = ent.byDate[d] || (d >= o.start && d < today ? 'Missing' : '');
+                        if (d <= today && !(o.closedDate && d >= o.closedDate)) st = ent.byDate[d] || (d >= o.start && d < today ? 'Missing' : '');
                         if (st === 'Done') ok++; else if (st === 'Not Done' || st === 'Missing') x++;
                         const v = sym[st]; cells += `<td class="p-0.5 text-center"><span class="inline-block w-6 rounded text-xs font-bold ${v ? v[1] : 'text-gray-300'}" ${st === 'Missing' ? 'title="Tidak ada laporan (dihitung x)"' : ''}>${v ? v[0] : '·'}</span></td>`;
                     }
@@ -1329,55 +1290,21 @@
         // ---------- Pelaporan: satu halaman ----------
         function switchReportTab() { document.getElementById('report-harian').classList.remove('hidden'); document.getElementById('report-kasus').classList.remove('hidden'); }
 
-        // ---------- Pelaporan Kasus: tanggal dan edit (Admin) ----------
-        async function submitCaseReport() {
-            const oplId = document.getElementById('kasus-opl-select').value, desc = document.getElementById('kasus-desc').value.trim();
-            if (!oplId) return alert('Pilih OPL Kasus terlebih dahulu!');
-            const today = localDate(new Date()), dateEl = document.getElementById('kasus-date');
-            const date = currentUser.role === 'Admin' && dateEl && dateEl.value ? dateEl.value : today, isPast = date < today;
-            if (date > today) return alert('Tanggal laporan tidak boleh di masa depan.');
-            const hasFile = document.getElementById('kasus-img').files.length > 0;
-            if (!hasFile && !isPast) return alert("GAGAL: Laporan kasus wajib diattach foto bukti!");
-            if (isPast && !confirm(`Anda akan menyimpan laporan kasus tanggal ${date}. Lanjutkan?`)) return;
-            let image = null; try { image = await uploadFile('kasus-img', 'kasus'); } catch (e) { return alert('Gagal upload foto: ' + (e.message || e)); }
-            const { error } = await sb.from('case_reports').insert({ opl_id: oplId, description: desc, image_url: image, reported_by: currentUser.id, report_date: date });
-            if (error) return alert('Gagal menyimpan laporan: ' + error.message);
-            alert(`Laporan kasus untuk ${oplId} tanggal ${date} berhasil disimpan.`);
-            document.getElementById('kasus-desc').value = ''; document.getElementById('kasus-img').value = '';
-            if (currentUser.role === 'Admin') loadCaseReports();
+
+        // ---------- Pelaporan per Kasus (kartu sama seperti Harian, default Interval) ----------
+        function renderKasusCards(list) {
+            document.getElementById('kasus-checklist').innerHTML = list.map(opl => `
+                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-purple-500">
+                    <div class="flex justify-between items-start mb-3">
+                        <div><h4 class="font-bold text-purple-800">${esc(opl.id)} - ${esc(opl.name)}</h4><p class="text-sm text-gray-500">${esc(opl.case)}</p></div>
+                        <select id="report-status-${esc(opl.id)}" class="border p-1 rounded text-sm bg-green-50"><option value="Done">Done (☑)</option><option value="Not Done">Not Done (x)</option><option value="Interval" selected>Interval (tidak ada kasus / tidak perlu lapor)</option></select>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded border border-dashed border-gray-300">
+                        <label class="block text-xs font-bold text-red-600 mb-1"><i class="fas fa-camera mr-1"></i> Wajib Upload Bukti Pelaporan (kecuali dipilih Interval)</label>
+                        <input type="file" id="report-img-${esc(opl.id)}" accept="image/*" capture="environment" class="w-full text-sm">
+                    </div>
+                </div>`).join('') || '<p class="text-gray-500 italic">Tidak ada OPL dengan tipe Per Kasus untuk bagian Anda.</p>';
         }
-        let caseRows = [], caseEditId = null;
-        async function loadCaseReports() {
-            const el = document.getElementById('kasus-admin-list'); if (!el) return;
-            const { data, error } = await sb.from('case_reports').select('id, opl_id, report_date, description, image_url').order('report_date', { ascending: false }).order('id', { ascending: false }).limit(50);
-            if (error) { el.innerHTML = '<p class="text-red-600 text-sm">Gagal memuat riwayat: ' + esc(error.message) + '</p>'; return; }
-            caseRows = data;
-            el.innerHTML = `<h4 class="font-bold mb-2">Riwayat Laporan Kasus <span class="text-xs font-normal text-gray-500">(50 terbaru, Admin dapat mengedit)</span></h4><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2">Tanggal</th><th class="p-2">OPL</th><th class="p-2">Deskripsi</th><th class="p-2">Foto</th><th class="p-2"></th></tr></thead><tbody>${data.map(r => { const o = opls.find(x => x.id === r.opl_id) || {};
-                return `<tr class="border-b"><td class="p-2 text-sm whitespace-nowrap">${fmtDate(r.report_date)}</td><td class="p-2 text-sm"><b>${esc(r.opl_id)}</b> ${esc(o.name || '')}</td><td class="p-2 text-sm">${esc(r.description || '')}</td><td class="p-2">${thumbHtml(r.image_url)}</td><td class="p-2"><button onclick="editCase(${r.id})" class="text-blue-600 hover:underline text-sm"><i class="fas fa-pen mr-1"></i>Edit</button></td></tr>`; }).join('') || '<tr><td class="p-3 text-gray-500" colspan="5">Belum ada laporan kasus.</td></tr>'}</tbody></table>`;
-        }
-        function editCase(id) {
-            if (currentUser.role !== 'Admin') return alert('Hanya Admin yang dapat mengedit laporan kasus.');
-            const r = caseRows.find(x => x.id === id); if (!r) return; caseEditId = id;
-            document.getElementById('ce-opl').innerHTML = opls.filter(o => o.reportType === 'Kasus' && (o.status !== 'CLOSED' || o.id === r.opl_id)).map(o => `<option value="${esc(o.id)}">${esc(o.id)} - ${esc(o.name)}</option>`).join('');
-            document.getElementById('ce-opl').value = r.opl_id; document.getElementById('ce-date').value = r.report_date; document.getElementById('ce-desc').value = r.description || '';
-            showModal('modal-case-edit');
-        }
-        async function saveCaseEdit() {
-            const date = document.getElementById('ce-date').value, opl = document.getElementById('ce-opl').value;
-            if (!date || !opl) return alert('OPL dan tanggal wajib diisi.'); if (date > localDate(new Date())) return alert('Tanggal laporan tidak boleh di masa depan.');
-            const { error } = await sb.from('case_reports').update({ opl_id: opl, report_date: date, description: document.getElementById('ce-desc').value.trim() }).eq('id', caseEditId);
-            if (error) return alert('Gagal menyimpan: ' + error.message);
-            hideModal('modal-case-edit'); loadCaseReports(); alert('Laporan kasus diperbarui.');
-        }
-        const _renderReporting2 = renderReporting;
-        renderReporting = function () {
-            _renderReporting2();
-            if (currentUser.role !== 'Admin') return;
-            const today = localDate(new Date());
-            if (!document.getElementById('kasus-date-wrap')) document.getElementById('kasus-desc').parentElement.insertAdjacentHTML('afterend', `<div id="kasus-date-wrap" class="mb-4 bg-yellow-50 border border-yellow-300 p-3 rounded"><div class="flex flex-wrap items-center gap-3"><label class="text-sm font-bold">Tanggal laporan (Admin)</label><input type="date" id="kasus-date" max="${today}" value="${today}" class="keep-read border p-1 rounded"></div><p class="text-xs text-gray-600 mt-1">Untuk laporan yang tertinggal. Hanya Admin yang dapat memilih tanggal sebelumnya; bagian lain otomatis memakai tanggal hari ini. Foto bukti tidak wajib untuk tanggal sebelumnya.</p></div>`);
-            if (!document.getElementById('kasus-admin-list')) document.getElementById('report-kasus').insertAdjacentHTML('beforeend', '<div id="kasus-admin-list" class="bg-white p-6 rounded-lg shadow mt-4 overflow-x-auto"></div>');
-            loadCaseReports();
-        };
     </script>
 </body>
 </html>
