@@ -74,6 +74,7 @@
                 <button onclick="showSection('master-setting')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-sliders mr-2"></i> Pengaturan KPI</button>
             </nav>
             <div class="p-4 border-t border-gray-700">
+                <div class="text-xs text-gray-500 px-3 py-1">Versi 9 Okt 2026 (d): periode minggu Jumat-Kamis</div>
                 <button onclick="handleLogout()" class="w-full text-left py-2 px-3 rounded hover:bg-red-600 text-red-400"><i class="fas fa-sign-out-alt mr-2"></i> Logout</button>
             </div>
         </div>
@@ -1003,17 +1004,17 @@
             KPI_MIN = min; KPI_BOBOT = bobot; alert('Pengaturan disimpan.');
         }
 
-        // --- REKAP MONITORING (minggu Senin-Minggu; mengikuti OPL_REKAP.xlsx) ---
+        // --- REKAP MONITORING (minggu Jumat-Kamis; mengikuti OPL_REKAP.xlsx) ---
         const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
         let rmToken = 0;
         const addDays = (ds, n) => { const d = new Date(ds + 'T00:00:00'); d.setDate(d.getDate() + n); return localDate(d); };
-        const mondayOf = ds => { const d = new Date(ds + 'T00:00:00'); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return localDate(d); };
+        const weekStartOf = ds => { const d = new Date(ds + 'T00:00:00'); d.setDate(d.getDate() - ((d.getDay() + 2) % 7)); return localDate(d); }; // Jumat = awal minggu
         const shortDate = ds => `${parseInt(ds.slice(8))} ${MONTHS[parseInt(ds.slice(5, 7)) - 1]}`;
-        // Setiap minggu (Senin-Minggu) menjadi milik bulan dari hari Senin-nya
+        // Setiap minggu (Jumat-Kamis) menjadi milik bulan dari hari Jumat-nya
         function monthWeeks(ym) {
-            const d = new Date(ym + '-01T00:00:00'); while (d.getDay() !== 1) d.setDate(d.getDate() + 1);
-            const weeks = []; let mon = localDate(d);
-            while (mon.slice(0, 7) === ym) { weeks.push({ mon, sun: addDays(mon, 6) }); mon = addDays(mon, 7); }
+            const d = new Date(ym + '-01T00:00:00'); while (d.getDay() !== 5) d.setDate(d.getDate() + 1);
+            const weeks = []; let ws = localDate(d);
+            while (ws.slice(0, 7) === ym) { weeks.push({ ws, we: addDays(ws, 6) }); ws = addDays(ws, 7); }
             return weeks;
         }
         const pct = (ok, x) => (ok + x) ? Math.round(ok / (ok + x) * 100) + '%' : '-';
@@ -1064,15 +1065,15 @@
             const body = document.getElementById('rm-body'), kpi = document.getElementById('rm-kpi');
             body.innerHTML = '<p class="text-gray-500">Memuat data...</p>'; kpi.innerHTML = '';
             let ym, year, from, to, weeks;
-            if (view === 'week') { ym = document.getElementById('rm-month').value; weeks = monthWeeks(ym); from = weeks[0].mon; to = weeks[weeks.length - 1].sun; }
+            if (view === 'week') { ym = document.getElementById('rm-month').value; weeks = monthWeeks(ym); from = weeks[0].ws; to = weeks[weeks.length - 1].we; }
             else if (view === 'day') { ym = document.getElementById('rm-month').value; const [yy, mm] = ym.split('-').map(Number); from = ym + '-01'; to = `${ym}-${pad2(new Date(yy, mm, 0).getDate())}`; }
-            else { year = document.getElementById('rm-year').value; from = monthWeeks(year + '-01')[0].mon; const dw = monthWeeks(year + '-12'); to = dw[dw.length - 1].sun; }
+            else { year = document.getElementById('rm-year').value; from = monthWeeks(year + '-01')[0].ws; const dw = monthWeeks(year + '-12'); to = dw[dw.length - 1].we; }
             list = list.filter(o => !(o.closedDate && o.closedDate <= from));
             let map; try { map = await loadEntries(from, to); } catch (e) { return body.innerHTML = '<p class="text-red-600">Gagal memuat: ' + esc(e.message) + '</p>'; }
             if (token !== rmToken) return;
             const daysOf = o => daysFor(o, map[o.id], from, to, today);
             const dayCache = {}; list.forEach(o => dayCache[o.id] = daysOf(o));
-            const note = `<p class="text-xs text-gray-500 mb-3">Minggu dihitung Senin-Minggu dan milik bulan dari hari Senin-nya. ☑ = Done, x = Not Done atau hari tanpa laporan (OPL Harian), Interval tidak dihitung. % = ☑ / (☑ + x). Warna: hijau 100%, kuning ≥ ${KPI_MIN}%, merah di bawahnya. OPL Tanpa Pelaporan tidak ditampilkan. OPL yang ditutup tidak dihitung sejak tanggal penutupan.</p>`;
+            const note = `<p class="text-xs text-gray-500 mb-3">Minggu dihitung Jumat-Kamis dan milik bulan dari hari Jumat-nya. ☑ = Done, x = Not Done atau hari tanpa laporan (OPL Harian), Interval tidak dihitung. % = ☑ / (☑ + x). Warna: hijau 100%, kuning ≥ ${KPI_MIN}%, merah di bawahnya. OPL Tanpa Pelaporan tidak ditampilkan. OPL yang ditutup tidak dihitung sejak tanggal penutupan.</p>`;
             const rowHead = o => `<td class="p-2 text-sm"><b>${esc(o.id)}</b> ${esc(o.name)}</td><td class="p-2 text-sm">${esc(o.dept)}</td><td class="p-2 text-xs">${esc(o.reportType)}</td>`;
             if (view === 'day') {
                 const n = parseInt(to.slice(8)), sym = { Done: ['☑', 'bg-green-100 text-green-800'], 'Not Done': ['x', 'bg-red-100 text-red-800'], Interval: ['I', 'bg-gray-200 text-gray-600'], Missing: ['x', 'bg-red-50 text-red-400'] };
@@ -1092,17 +1093,17 @@
                 return;
             }
             if (view === 'week') {
-                const head = weeks.map((w, i) => `<th class="p-2 text-center" colspan="3">W${i + 1}<div class="text-xs font-normal">${shortDate(w.mon)}–${shortDate(w.sun)}</div></th>`).join('');
+                const head = weeks.map((w, i) => `<th class="p-2 text-center" colspan="3">W${i + 1}<div class="text-xs font-normal">${shortDate(w.ws)}–${shortDate(w.we)}</div></th>`).join('');
                 const sub = weeks.map(() => '<th class="p-1 text-center text-xs">☑</th><th class="p-1 text-center text-xs">x</th><th class="p-1 text-center text-xs">%</th>').join('');
                 const rowFor = days => { let tot = { ok: 0, x: 0 }, cells = '';
-                    weeks.forEach(w => { const t = tally(days, e => mondayOf(e.date) === w.mon); tot.ok += t.ok; tot.x += t.x; cells += `<td class="p-1 text-center text-sm">${t.ok || ''}</td><td class="p-1 text-center text-sm">${t.x || ''}</td>${pcell(t.ok, t.x)}`; });
+                    weeks.forEach(w => { const t = tally(days, e => weekStartOf(e.date) === w.ws); tot.ok += t.ok; tot.x += t.x; cells += `<td class="p-1 text-center text-sm">${t.ok || ''}</td><td class="p-1 text-center text-sm">${t.x || ''}</td>${pcell(t.ok, t.x)}`; });
                     return { cells, tot }; };
                 const rows = list.map(o => { const r = rowFor(dayCache[o.id]); return `<tr class="border-b">${rowHead(o)}${r.cells}${pcell(r.tot.ok, r.tot.x, 'border-l-2')}</tr>`; }).join('');
                 const sum = shownDepts.map(d => { const r = rowFor(list.filter(o => o.dept === d).flatMap(o => dayCache[o.id])); return `<tr class="border-b bg-gray-50 font-bold"><td class="p-2 text-sm" colspan="3">TOTAL ${esc(d)}</td>${r.cells}${pcell(r.tot.ok, r.tot.x, 'border-l-2')}</tr>`; }).join('');
                 body.innerHTML = note + `<table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2" rowspan="2">OPL</th><th class="p-2" rowspan="2">Bagian</th><th class="p-2" rowspan="2">Tipe</th>${head}<th class="p-2 text-center border-l-2" rowspan="2">TOTAL BULAN</th></tr><tr class="bg-gray-100">${sub}</tr></thead><tbody>${rows || '<tr><td class="p-3 text-gray-500" colspan="19">Belum ada OPL yang dimonitor.</td></tr>'}${sum}</tbody></table>`;
                 renderKpi(kpi, from, to, today, list, dayCache, shownDepts);
             } else {
-                const cellsFor = days => { let tot = { ok: 0, x: 0 }, c = ''; for (let m = 1; m <= 12; m++) { const p = `${year}-${String(m).padStart(2, '0')}`, t = tally(days, e => mondayOf(e.date).slice(0, 7) === p); tot.ok += t.ok; tot.x += t.x; c += pcell(t.ok, t.x); } return c + pcell(tot.ok, tot.x, 'border-l-2'); };
+                const cellsFor = days => { let tot = { ok: 0, x: 0 }, c = ''; for (let m = 1; m <= 12; m++) { const p = `${year}-${String(m).padStart(2, '0')}`, t = tally(days, e => weekStartOf(e.date).slice(0, 7) === p); tot.ok += t.ok; tot.x += t.x; c += pcell(t.ok, t.x); } return c + pcell(tot.ok, tot.x, 'border-l-2'); };
                 const rows = list.map(o => `<tr class="border-b">${rowHead(o)}${cellsFor(dayCache[o.id])}</tr>`).join('');
                 const sum = shownDepts.map(d => `<tr class="border-b bg-gray-50 font-bold"><td class="p-2 text-sm" colspan="3">TOTAL ${esc(d)}</td>${cellsFor(list.filter(o => o.dept === d).flatMap(o => dayCache[o.id]))}</tr>`).join('');
                 body.innerHTML = note + `<table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2">OPL</th><th class="p-2">Bagian</th><th class="p-2">Tipe</th>${MONTHS.map(m => `<th class="p-2 text-center">${m}</th>`).join('')}<th class="p-2 text-center border-l-2">TOTAL ${year}</th></tr></thead><tbody>${rows || '<tr><td class="p-3 text-gray-500" colspan="16">Belum ada OPL yang dimonitor.</td></tr>'}${sum}</tbody></table>`;
