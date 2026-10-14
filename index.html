@@ -74,7 +74,7 @@
                 <button onclick="showSection('master-setting')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-sliders mr-2"></i> Pengaturan KPI</button>
             </nav>
             <div class="p-4 border-t border-gray-700">
-                <div class="text-xs text-gray-500 px-3 py-1">Versi 9 Okt 2026 (h): per Kasus tanpa laporan dianggap -</div>
+                <div class="text-xs text-gray-500 px-3 py-1">Versi 14 Okt 2026 (i): verifikator manual, Admin dapat edit data BA</div>
                 <button onclick="handleLogout()" class="w-full text-left py-2 px-3 rounded hover:bg-red-600 text-red-400"><i class="fas fa-sign-out-alt mr-2"></i> Logout</button>
             </div>
         </div>
@@ -195,10 +195,10 @@
                         </div>
                         <div class="grid grid-cols-2 gap-4 mb-4">
                             <div><label class="block text-sm font-bold mb-1">Kategori Final <span class="font-normal text-gray-500">(otomatis dari master temuan)</span></label><select id="audit-finding-select" disabled class="w-full border p-2 rounded bg-gray-100"><option value="OK">OK</option><option value="Minor">Minor</option><option value="Mayor">Mayor</option></select></div>
-                            <div><label class="block text-sm font-bold mb-1">Verifikator <span class="font-normal text-gray-500">(otomatis dari akun login)</span></label><input type="text" id="audit-verifikator" readonly class="w-full border p-2 rounded bg-gray-100"></div>
+                            <div><label class="block text-sm font-bold mb-1">Verifikator <span class="font-normal text-gray-500">(nama yang menemukan temuan)</span></label><input type="text" id="audit-verifikator" class="w-full border p-2 rounded" placeholder="Nama verifikator"></div>
                         </div>
                         <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div><label class="block text-sm font-bold mb-1">Jabatan Verifikator</label><input type="text" id="audit-verifier-title" readonly class="w-full border p-2 rounded bg-gray-100"></div>
+                            <div><label class="block text-sm font-bold mb-1">Jabatan Verifikator</label><input type="text" id="audit-verifier-title" placeholder="MR, HR, Consultant" class="w-full border p-2 rounded"></div>
                             <div><label class="block text-sm font-bold mb-1">Tanggal Sosialisasi OPL</label><input type="date" id="audit-sosialisasi" class="w-full border p-2 rounded"></div>
                             <div><label class="block text-sm font-bold mb-1">Nama PIC / Penanggung Jawab <span class="font-normal text-gray-500">(otomatis dari master user)</span></label><input type="text" id="audit-pic-name" class="w-full border p-2 rounded"></div>
                             <div><label class="block text-sm font-bold mb-1">Jabatan PIC</label><input type="text" id="audit-pic-title" placeholder="Spv Produksi" class="w-full border p-2 rounded"></div>
@@ -321,6 +321,19 @@
         </div>
     </div>
 
+    <!-- Modal Edit Data Berita Acara (Admin) -->
+    <div id="modal-ba-edit" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg w-[30rem] max-w-[95vw] max-h-[92vh] overflow-y-auto shadow-2xl">
+            <h3 id="be-title" class="text-xl font-bold mb-3">Edit Data Berita Acara</h3>
+            <label class="block text-sm font-bold mb-1">Nama Verifikator (yang menemukan temuan)</label><input id="be-verifikator" class="w-full border p-2 rounded mb-2">
+            <label class="block text-sm font-bold mb-1">Jabatan Verifikator</label><input id="be-verifier-title" class="w-full border p-2 rounded mb-2">
+            <label class="block text-sm font-bold mb-1">Nama PIC / Penanggung Jawab</label><input id="be-pic-name" class="w-full border p-2 rounded mb-2">
+            <label class="block text-sm font-bold mb-1">Jabatan PIC</label><input id="be-pic-title" class="w-full border p-2 rounded mb-2">
+            <label class="block text-sm font-bold mb-1">Tanggal Sosialisasi</label><input type="date" id="be-sosialisasi" class="w-full border p-2 rounded mb-4">
+            <div class="flex justify-end space-x-2"><button onclick="hideModal('modal-ba-edit')" class="px-4 py-2 bg-gray-300 rounded">Batal</button><button onclick="saveBaEdit()" class="px-4 py-2 bg-blue-600 text-white rounded">Simpan</button></div>
+        </div>
+    </div>
+
     <!-- Modal Lihat OPL -->
     <div id="modal-opl-view" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
         <div class="bg-white p-6 rounded-lg w-[40rem] max-w-[95vw] max-h-[92vh] overflow-y-auto shadow-2xl">
@@ -427,7 +440,7 @@
             if (au.error || tk.error || fc.error) throw new Error((au.error || tk.error || fc.error).message);
             findingCats = fc.data;
             audits = au.data.map(a => ({ id: a.id, oplId: a.opl_id, dept: a.dept, finding: a.finding, keterangan: a.keterangan, isRepeated: a.is_repeated, docNo: a.doc_no, date: a.audit_date }));
-            capaTickets = tk.data.map(t => ({ id: t.id, oplId: t.opl_id, dept: t.dept, finding: t.finding, keterangan: t.keterangan, status: t.status, tp: t.tindakan_perbaikan, tc: t.tindakan_pencegahan, target: t.target_date, ba: t.audits || {} }));
+            capaTickets = tk.data.map(t => ({ id: t.id, auditId: t.audit_id, oplId: t.opl_id, dept: t.dept, finding: t.finding, keterangan: t.keterangan, status: t.status, tp: t.tindakan_perbaikan, tc: t.tindakan_pencegahan, target: t.target_date, ba: t.audits || {} }));
             const [rc, ur] = await Promise.all([sb.from('recurrence_reports').select('*').order('id', { ascending: false }), sb.from('opl_update_requests').select('*').order('id', { ascending: false })]);
             if (rc.error || ur.error) throw new Error((rc.error || ur.error).message);
             recurrences = rc.data.map(r => ({ id: r.id, oplId: r.opl_id, date: r.occurred_on, dept: r.occurred_dept, desc: r.description, image: r.image_url }));
@@ -685,6 +698,7 @@
             const g = id => document.getElementById(id).value.trim();
             const oplId = g('audit-opl-select'), dept = g('audit-dept-select'), catId = g('audit-kategori-baku'), keterangan = g('audit-keterangan');
             if (!oplId || !catId || !keterangan) return alert('OPL, Kategori Temuan, dan Keterangan wajib diisi!');
+            if (!g('audit-verifikator')) return alert('Nama verifikator (yang menemukan temuan) wajib diisi!');
             if (!dept || dept === 'ALL') return alert('Pilih bagian yang diaudit.');
             const cat = findingCats.find(c => String(c.id) === catId), ym = new Date().toISOString().slice(0, 7);
             const isRepeated = audits.some(a => a.oplId === oplId && a.dept === dept && String(a.date).slice(0, 7) === ym && a.finding !== 'OK');
@@ -708,7 +722,8 @@
                 return `<div class="border rounded-lg p-4 shadow-sm bg-white"><div class="flex justify-between items-start"><div><h4 class="font-bold text-lg text-indigo-700">${esc(t.ba.doc_no || 'CAPA-' + t.id)}</h4><p class="text-sm mt-1"><strong>OPL:</strong> ${esc(o.name || t.oplId)} | <strong>Bagian:</strong> ${esc(t.dept)}</p></div><span class="px-3 py-1 rounded-full text-xs font-bold ${badge}">${STATUS_LABEL[t.status]}</span></div>
                     <div class="mt-3 bg-gray-50 p-3 rounded border"><p class="text-sm font-bold">Temuan (${esc(t.finding)}):</p><p class="text-sm text-gray-700">${esc(t.keterangan)}</p></div>
                     ${t.tp || t.tc ? `<div class="mt-3 text-sm"><p><b>Tindakan Perbaikan:</b> ${esc(t.tp)}</p><p><b>Tindakan Pencegahan:</b> ${esc(t.tc)}</p><p><b>Target:</b> ${fmtDate(t.target)}</p></div>` : ''}
-                    <div class="mt-3 flex justify-end space-x-2">${btn('printBA', '<i class="fas fa-print mr-1"></i>Cetak Berita Acara', 'keep-read bg-gray-200 hover:bg-gray-300')}
+                    <div class="mt-3 flex justify-end space-x-2">${currentUser.role === 'Admin' ? btn('openBaEdit', '<i class="fas fa-pen mr-1"></i>Edit Data BA', 'keep-read bg-yellow-100 hover:bg-yellow-200') : ''}
+                    ${btn('printBA', '<i class="fas fa-print mr-1"></i>Cetak Berita Acara', 'keep-read bg-gray-200 hover:bg-gray-300')}
                     ${canInput && filler && t.status !== 'CLOSED' ? btn('openCapa', t.status === 'OPEN' ? 'Isi CAPA' : 'Ubah CAPA', 'bg-blue-600 text-white hover:bg-blue-700') : ''}
                     ${canInput && reviewer && t.status === 'IN_PROGRESS' ? btn('closeTicket', 'Verifikasi & Tutup', 'bg-green-600 text-white hover:bg-green-700') : ''}</div></div>`;
             }).join('') || '<p class="text-gray-500">Tidak ada tiket.</p>';
@@ -732,9 +747,15 @@
             const { error } = await sb.from('capa_tickets').update({ status: 'CLOSED', closed_at: new Date().toISOString() }).eq('id', id);
             if (error) return alert('Gagal: ' + error.message); await loadData(); renderTickets();
         }
-        function printBA(id) {
-            const t = capaTickets.find(x => x.id === id), o = opls.find(x => x.id === t.oplId) || {}, b = t.ba || {}, row = (k, v) => `<tr><td style="width:38%">${k}</td><td>: ${esc(v || '-')}</td></tr>`;
+        async function printBA(id) {
             const w = window.open('', '_blank');
+            const t = capaTickets.find(x => x.id === id); let o = opls.find(x => x.id === t.oplId) || {}, b = t.ba || {};
+            const row = (k, v) => `<tr><td style="width:38%">${k}</td><td>: ${esc(v || '-')}</td></tr>`;
+            try { // ambil data terbaru: tanggal OPL hasil edit dan data BA yang dikoreksi Admin
+                const [fo, fb] = await Promise.all([sb.from('opls').select('name, creation_date').eq('id', t.oplId).single(), t.auditId ? sb.from('audits').select('doc_no, verifikator, verifier_title, pic_name, pic_title, socialization_date').eq('id', t.auditId).single() : Promise.resolve({})]);
+                if (fo.data) o = { ...o, name: fo.data.name, creationDate: fo.data.creation_date };
+                if (fb.data) b = { ...b, ...fb.data };
+            } catch (e) { /* pakai data yang sudah dimuat */ }
             w.document.write(`<html><head><title>${esc(b.doc_no)}</title><style>body{font-family:Arial;font-size:13px;margin:32px}h2,h3{text-align:center;margin:2px}td{padding:3px;vertical-align:top}.box{border:1px solid #000;padding:8px;min-height:60px;white-space:pre-wrap}.sig td{text-align:center;width:33%;padding-top:70px}</style></head><body>
             <h2>BERITA ACARA VERIFIKASI PELAKSANAAN SOSIALISASI</h2><h3>ONE POINT LESSON (OPL)</h3><p style="text-align:right">NO: ${esc(b.doc_no)}</p>
             <p>Pada hari ini, ${fmtDate(new Date())}, bertempat di PT Cahaya Berlian Lestari, telah dilaksanakan kegiatan verifikasi terhadap pelaksanaan sosialisasi One Point Lesson (OPL), dengan rincian sebagai berikut:</p>
@@ -1283,8 +1304,6 @@
         const _renderAuditSection = renderAuditSection;
         renderAuditSection = function () {
             _renderAuditSection();
-            document.getElementById('audit-verifikator').value = currentUser.full_name || currentUser.username || '';
-            document.getElementById('audit-verifier-title').value = currentUser.jabatan || '';
             document.getElementById('audit-opl-select').onchange = e => { const o = opls.find(x => x.id === e.target.value); if (o) { document.getElementById('audit-dept-select').value = o.dept; fillPic(); } };
             document.getElementById('audit-dept-select').onchange = fillPic;
         };
@@ -1306,6 +1325,24 @@
                         <input type="file" id="report-img-${esc(opl.id)}" accept="image/*" capture="environment" class="w-full text-sm">
                     </div>
                 </div>`).join('') || '<p class="text-gray-500 italic">Tidak ada OPL dengan tipe Per Kasus untuk bagian Anda.</p>';
+        }
+
+        // ---------- Edit data Berita Acara (Admin) ----------
+        let baEditAuditId = null;
+        function openBaEdit(ticketId) {
+            if (currentUser.role !== 'Admin') return alert('Hanya Admin yang dapat mengedit data Berita Acara.');
+            const t = capaTickets.find(x => x.id === ticketId); if (!t || !t.auditId) return alert('Data audit untuk tiket ini tidak ditemukan.');
+            baEditAuditId = t.auditId; const b = t.ba || {}, set = (i, v) => document.getElementById(i).value = v || '';
+            document.getElementById('be-title').innerText = 'Edit Data BA ' + (b.doc_no || '');
+            set('be-verifikator', b.verifikator); set('be-verifier-title', b.verifier_title); set('be-pic-name', b.pic_name); set('be-pic-title', b.pic_title); set('be-sosialisasi', b.socialization_date);
+            showModal('modal-ba-edit');
+        }
+        async function saveBaEdit() {
+            const g = i => document.getElementById(i).value.trim();
+            if (!g('be-verifikator')) return alert('Nama verifikator wajib diisi.');
+            const { error } = await sb.from('audits').update({ verifikator: g('be-verifikator'), verifier_title: g('be-verifier-title') || null, pic_name: g('be-pic-name') || null, pic_title: g('be-pic-title') || null, socialization_date: g('be-sosialisasi') || null }).eq('id', baEditAuditId);
+            if (error) return alert('Gagal menyimpan: ' + error.message);
+            hideModal('modal-ba-edit'); await loadData(); renderTickets(); alert('Data Berita Acara diperbarui.');
         }
     </script>
 </body>
