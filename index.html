@@ -74,7 +74,7 @@
                 <button onclick="showSection('master-setting')" class="nav-btn w-full text-left py-2 px-3 rounded hover:bg-gray-700"><i class="fas fa-sliders mr-2"></i> Pengaturan KPI</button>
             </nav>
             <div class="p-4 border-t border-gray-700">
-                <div class="text-xs text-gray-500 px-3 py-1">Versi 14 Okt 2026 (i): verifikator manual, Admin dapat edit data BA</div>
+                <div class="text-xs text-gray-500 px-3 py-1">Versi 16 Okt 2026 (j): rumus KPI = bobot × % pelaporan</div>
                 <button onclick="handleLogout()" class="w-full text-left py-2 px-3 rounded hover:bg-red-600 text-red-400"><i class="fas fa-sign-out-alt mr-2"></i> Logout</button>
             </div>
         </div>
@@ -1104,19 +1104,24 @@
 
         // --- KPI Pelaporan OPL (sheet KPI: IP 100% / 50% / 0%) ---
         function renderKpi(el, from, to, today, list, dayCache, depts) {
+            const fmt = n => (Math.round((n + 1e-9) * 100) / 100).toLocaleString('id-ID', { maximumFractionDigits: 2 });
             const rows = depts.map(d => {
                 const mine = list.filter(o => o.dept === d), t = tally(mine.flatMap(o => dayCache[o.id]), () => true);
                 const found = audits.filter(a => a.dept === d && a.finding !== 'OK' && a.date >= from && a.date <= to);
                 const perOpl = {}; found.forEach(a => perOpl[a.oplId] = (perOpl[a.oplId] || 0) + 1);
                 const repeated = found.some(a => a.isRepeated) || Object.values(perOpl).some(n => n > 1);
                 const overdue = capaTickets.filter(c => c.dept === d && c.status !== 'CLOSED' && c.target && c.target < today).length;
-                const p = (t.ok + t.x) ? t.ok / (t.ok + t.x) * 100 : null, inconsistent = p !== null && p < KPI_MIN;
-                let factor = 1, why = 'Pelaporan konsisten dan tidak ada temuan audit.';
-                if (repeated || overdue || inconsistent) { factor = 0; why = [repeated ? 'temuan audit berulang' : '', overdue ? 'tindak lanjut CAPA melewati batas waktu' : '', inconsistent ? 'pelaporan tidak konsisten' : ''].filter(Boolean).join(', '); why = why.charAt(0).toUpperCase() + why.slice(1) + '.'; }
-                else if (found.length >= 1) { factor = 0.5; why = `Ada ${found.length} temuan audit pada periode ini.`; }
-                return `<tr class="border-b"><td class="p-2 font-bold">${esc(d)}</td><td class="p-2 text-center">${p === null ? '-' : Math.round(p) + '%'}</td><td class="p-2 text-center">${found.length}</td><td class="p-2 text-center">${repeated ? 'Ya' : '-'}</td><td class="p-2 text-center">${overdue || '-'}</td><td class="p-2 text-center font-bold ${factor === 1 ? 'text-green-700' : factor === 0.5 ? 'text-yellow-700' : 'text-red-700'}">${KPI_BOBOT * factor} / ${KPI_BOBOT}</td><td class="p-2 text-sm">${why}</td></tr>`;
+                const p = (t.ok + t.x) ? t.ok / (t.ok + t.x) * 100 : null;
+                // Nilai KPI = Bobot x % pelaporan; 1 temuan audit = x 50%; 2 temuan atau lebih = x 0%
+                const mult = found.length === 0 ? 1 : (found.length === 1 ? 0.5 : 0);
+                const score = KPI_BOBOT * (p === null ? 1 : p / 100) * mult;
+                let why = p === null ? `Belum ada data pelaporan (tidak ada pengurang): ${fmt(KPI_BOBOT)}` : `${fmt(KPI_BOBOT)} × ${fmt(p)}% pelaporan = ${fmt(KPI_BOBOT * p / 100)}`;
+                if (found.length === 1) why += ` × 50% (1 temuan audit) = ${fmt(score)}`;
+                else if (found.length >= 2) why += ` × 0% (${found.length} temuan audit) = 0`;
+                const ratio = KPI_BOBOT ? score / KPI_BOBOT : 0, cls = ratio >= 0.8 ? 'text-green-700' : (ratio >= 0.5 ? 'text-yellow-700' : 'text-red-700');
+                return `<tr class="border-b"><td class="p-2 font-bold">${esc(d)}</td><td class="p-2 text-center">${p === null ? '-' : fmt(p) + '%'}</td><td class="p-2 text-center">${found.length}</td><td class="p-2 text-center">${repeated ? 'Ya' : '-'}</td><td class="p-2 text-center">${overdue || '-'}</td><td class="p-2 text-center font-bold ${cls}">${fmt(score)} / ${fmt(KPI_BOBOT)}</td><td class="p-2 text-sm">${why}</td></tr>`;
             }).join('');
-            el.innerHTML = `<h3 class="font-bold text-lg mb-1">Nilai KPI Pelaporan OPL (bulan terpilih)</h3><p class="text-xs text-gray-500 mb-3">IP 100% = pelaporan konsisten (≥ ${KPI_MIN}%) dan tanpa temuan audit. IP 50% = 1 temuan audit. IP 0% = temuan berulang / lebih dari satu pada OPL yang sama, tindak lanjut melewati batas waktu, atau pelaporan tidak konsisten. Bobot ${KPI_BOBOT}. Batas dan bobot dapat diubah di menu Pengaturan KPI.</p><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2">Bagian</th><th class="p-2 text-center">Pelaporan</th><th class="p-2 text-center">Temuan Audit</th><th class="p-2 text-center">Berulang</th><th class="p-2 text-center">CAPA Terlambat</th><th class="p-2 text-center">Nilai KPI</th><th class="p-2">Keterangan</th></tr></thead><tbody>${rows || '<tr><td class="p-3 text-gray-500" colspan="7">Belum ada data.</td></tr>'}</tbody></table>`;
+            el.innerHTML = `<h3 class="font-bold text-lg mb-1">Nilai KPI Pelaporan OPL (bulan terpilih)</h3><p class="text-xs text-gray-500 mb-3">Nilai KPI = bobot × % pelaporan. Jika ada 1 temuan audit pada periode: nilai × 50%. Jika ada 2 temuan audit atau lebih: nilai × 0%. Bobot ${fmt(KPI_BOBOT)} (dapat diubah di menu Pengaturan KPI). Kolom Berulang dan CAPA Terlambat hanya informasi, tidak mengubah nilai.</p><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-200"><th class="p-2">Bagian</th><th class="p-2 text-center">Pelaporan</th><th class="p-2 text-center">Temuan Audit</th><th class="p-2 text-center">Berulang</th><th class="p-2 text-center">CAPA Terlambat</th><th class="p-2 text-center">Nilai KPI</th><th class="p-2">Perhitungan</th></tr></thead><tbody>${rows || '<tr><td class="p-3 text-gray-500" colspan="7">Belum ada data.</td></tr>'}</tbody></table>`;
         }
 
         const pad2 = n => String(n).padStart(2, '0');
